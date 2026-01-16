@@ -4,7 +4,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ordersApi } from '@/lib/api';
 import type { CheckoutData } from '@/types/shop';
-import { useCartStore } from '@/stores/cartStore';
 
 // Query keys
 export const orderKeys = {
@@ -40,15 +39,13 @@ export function useOrder(id: number) {
  */
 export function useCreateOrder() {
   const queryClient = useQueryClient();
-  const clearCart = useCartStore((state) => state.clearCart);
 
   return useMutation({
     mutationFn: (data: CheckoutData) => ordersApi.createOrder(data),
     onSuccess: () => {
       // Инвалидируем список заказов
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
-      // Очищаем корзину
-      clearCart();
+      // Корзина очищается в Checkout после показа диалога успеха
     },
   });
 }

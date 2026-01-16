@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Heart, Minus, Plus, ShoppingBag, Check } from 'lucide-react';
+import { Heart, Minus, Plus, ShoppingBag, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProduct } from '@/hooks/useProducts';
@@ -32,10 +32,7 @@ export default function ProductPage() {
     return (
       <div className="min-h-screen bg-background">
         <header className="sticky top-0 z-50 safe-area-top bg-background/95 backdrop-blur-md border-b border-border">
-          <div className="container flex h-14 items-center justify-between">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
+          <div className="container flex h-14 items-center justify-end">
             <Skeleton className="h-8 w-8 rounded-full" />
           </div>
         </header>
@@ -93,15 +90,7 @@ export default function ProductPage() {
     <div className="min-h-screen bg-background safe-area-bottom">
       {/* Header */}
       <header className="sticky top-0 z-50 safe-area-top bg-background/95 backdrop-blur-md border-b border-border">
-        <div className="container flex h-14 items-center justify-between">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-
+        <div className="container flex h-14 items-center justify-end">
           <Button
             variant="ghost"
             size="icon"

@@ -1,281 +1,116 @@
-"use client"
-
-import { useState, useEffect, useRef, useCallback } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-
-declare global {
-  interface Window {
-    gsap: any
-    MotionPathPlugin: any
-  }
-}
+import { useState, useRef, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
 interface ProductImageGalleryProps {
-  images: string[]
-  title: string
+  images: string[];
+  title: string;
 }
 
 export function ProductImageGallery({ images, title }: ProductImageGalleryProps) {
-  const [opened, setOpened] = useState(0)
-  const [inPlace, setInPlace] = useState(0)
-  const [disabled, setDisabled] = useState(false)
-  const [gsapReady, setGsapReady] = useState(false)
-  const autoplayTimer = useRef<number | null>(null)
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set([0]));
+  const containerRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
 
+  // Preload next image
   useEffect(() => {
-    const loadScripts = () => {
-      if (window.gsap && window.MotionPathPlugin) {
-        window.gsap.registerPlugin(window.MotionPathPlugin)
-        setGsapReady(true)
-        return
-      }
-
-      const gsapScript = document.createElement("script")
-      gsapScript.src = "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
-      gsapScript.onload = () => {
-        const motionPathScript = document.createElement("script")
-        motionPathScript.src = "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/MotionPathPlugin.min.js"
-        motionPathScript.onload = () => {
-          if (window.gsap && window.MotionPathPlugin) {
-            window.gsap.registerPlugin(window.MotionPathPlugin)
-            setGsapReady(true)
-          }
-        }
-        document.body.appendChild(motionPathScript)
-      }
-      document.body.appendChild(gsapScript)
+    const nextIndex = (currentIndex + 1) % images.length;
+    if (!loadedImages.has(nextIndex)) {
+      setLoadedImages(prev => new Set([...prev, nextIndex]));
     }
+  }, [currentIndex, images.length, loadedImages]);
 
-    loadScripts()
-  }, [])
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index);
+  };
 
-  const onClick = (index: number) => {
-    if (!disabled) setOpened(index)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const diff = touchStartX.current - touchEndX.current;
+    const threshold = 50;
+
+    if (diff > threshold && currentIndex < images.length - 1) {
+      // Swipe left - next
+      setCurrentIndex(currentIndex + 1);
+    } else if (diff < -threshold && currentIndex > 0) {
+      // Swipe right - prev
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
+
+  if (images.length === 0) return null;
+
+  if (images.length === 1) {
+    return (
+      <div className="relative w-full aspect-square bg-muted">
+        <img
+          src={images[0]}
+          alt={title}
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
   }
-
-  const onInPlace = (index: number) => setInPlace(index)
-
-  const next = useCallback(() => {
-    setOpened((currentOpened) => {
-      let nextIndex = currentOpened + 1
-      if (nextIndex >= images.length) nextIndex = 0
-      return nextIndex
-    })
-  }, [images.length])
-
-  const prev = useCallback(() => {
-    setOpened((currentOpened) => {
-      let prevIndex = currentOpened - 1
-      if (prevIndex < 0) prevIndex = images.length - 1
-      return prevIndex
-    })
-  }, [images.length])
-
-  useEffect(() => setDisabled(true), [opened])
-  useEffect(() => setDisabled(false), [inPlace])
-
-  useEffect(() => {
-    if (!gsapReady) return
-
-    if (autoplayTimer.current) {
-      clearInterval(autoplayTimer.current)
-    }
-
-    autoplayTimer.current = window.setInterval(next, 4500)
-
-    return () => {
-      if (autoplayTimer.current) {
-        clearInterval(autoplayTimer.current)
-      }
-    }
-  }, [opened, gsapReady, next])
-
-  if (images.length === 0) return null
 
   return (
     <div className="relative w-full aspect-square bg-muted overflow-hidden">
-      <svg viewBox="0 0 400 400" className="w-full h-full">
-        {gsapReady &&
-          images.map((image, i) => (
-            <g key={i} onClick={() => onClick(i)} className="cursor-pointer">
-              <GalleryImage
-                url={image}
-                title={`${title} - фото ${i + 1}`}
-                open={opened === i}
-                inPlace={inPlace === i}
-                id={i}
-                onInPlace={onInPlace}
-                total={images.length}
+      {/* Images Container */}
+      <div
+        ref={containerRef}
+        className="flex h-full transition-transform duration-300 ease-out"
+        style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {images.map((image, index) => (
+          <div
+            key={index}
+            className="w-full h-full flex-shrink-0"
+          >
+            {loadedImages.has(index) || Math.abs(index - currentIndex) <= 1 ? (
+              <img
+                src={image}
+                alt={`${title} - фото ${index + 1}`}
+                className="w-full h-full object-cover"
+                loading={index === 0 ? 'eager' : 'lazy'}
               />
-            </g>
-          ))}
-        <Tabs images={images} onSelect={onClick} />
-      </svg>
+            ) : (
+              <div className="w-full h-full bg-muted animate-pulse" />
+            )}
+          </div>
+        ))}
+      </div>
 
-      <button
-        onClick={prev}
-        className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background transition-colors shadow-md"
-        aria-label="Предыдущее фото"
-      >
-        <ChevronLeft className="w-5 h-5" />
-      </button>
-
-      <button
-        onClick={next}
-        className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background transition-colors shadow-md"
-        aria-label="Следующее фото"
-      >
-        <ChevronRight className="w-5 h-5" />
-      </button>
-    </div>
-  )
-}
-
-interface GalleryImageProps {
-  url: string
-  title: string
-  open: boolean
-  inPlace: boolean
-  id: number
-  onInPlace: (id: number) => void
-  total: number
-}
-
-function GalleryImage({ url, title, open, inPlace, id, onInPlace, total }: GalleryImageProps) {
-  const [firstLoad, setLoaded] = useState(true)
-  const clip = useRef<SVGCircleElement>(null)
-
-  const gap = 10
-  const circleRadius = 7
-  const defaults = { transformOrigin: "center center" }
-  const duration = 0.4
-  const width = 400
-  const height = 400
-  const scale = 700
-
-  const bigSize = circleRadius * scale
-  const overlap = 0
-
-  const getPosSmall = () => ({
-    cx: width / 2 - (total * (circleRadius * 2 + gap) - gap) / 2 + id * (circleRadius * 2 + gap),
-    cy: height - 30,
-    r: circleRadius,
-  })
-  const getPosSmallAbove = () => ({
-    cx: width / 2 - (total * (circleRadius * 2 + gap) - gap) / 2 + id * (circleRadius * 2 + gap),
-    cy: height / 2,
-    r: circleRadius * 2,
-  })
-  const getPosCenter = () => ({ cx: width / 2, cy: height / 2, r: circleRadius * 7 })
-  const getPosEnd = () => ({ cx: width / 2 - bigSize + overlap, cy: height / 2, r: bigSize })
-  const getPosStart = () => ({ cx: width / 2 + bigSize - overlap, cy: height / 2, r: bigSize })
-
-  useEffect(() => {
-    const gsap = window.gsap
-    if (!gsap) return
-
-    setLoaded(false)
-    if (clip.current) {
-      const flipDuration = firstLoad ? 0 : duration
-      const upDuration = firstLoad ? 0 : 0.2
-      const bounceDuration = firstLoad ? 0.01 : 1
-      const delay = firstLoad ? 0 : flipDuration + upDuration
-
-      if (open) {
-        gsap
-          .timeline()
-          .set(clip.current, { ...defaults, ...getPosSmall() })
-          .to(clip.current, {
-            ...defaults,
-            ...getPosCenter(),
-            duration: upDuration,
-            ease: "power3.inOut",
-          })
-          .to(clip.current, {
-            ...defaults,
-            ...getPosEnd(),
-            duration: flipDuration,
-            ease: "power4.in",
-            onComplete: () => onInPlace(id),
-          })
-      } else {
-        gsap
-          .timeline({ overwrite: true })
-          .set(clip.current, { ...defaults, ...getPosStart() })
-          .to(clip.current, {
-            ...defaults,
-            ...getPosCenter(),
-            delay: delay,
-            duration: flipDuration,
-            ease: "power4.out",
-          })
-          .to(clip.current, {
-            ...defaults,
-            motionPath: {
-              path: [getPosSmallAbove(), getPosSmall()],
-              curviness: 1,
-            },
-            duration: bounceDuration,
-            ease: "bounce.out",
-          })
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
-
-  const clipId = `clip-${id}`
-  const patternId = `pattern-${id}`
-
-  return (
-    <g>
-      <defs>
-        <clipPath id={clipId}>
-          <circle ref={clip} cx="200" cy="200" r="200" />
-        </clipPath>
-        <pattern id={patternId} patternUnits="objectBoundingBox" width="1" height="1">
-          <image href={url} x="0" y="0" width="400" height="400" preserveAspectRatio="xMidYMid slice" />
-        </pattern>
-      </defs>
-      <rect clipPath={`url(#${clipId})`} fill={`url(#${patternId})`} x="0" y="0" width="400" height="400" />
-    </g>
-  )
-}
-
-interface TabsProps {
-  images: string[]
-  onSelect: (index: number) => void
-}
-
-function Tabs({ images, onSelect }: TabsProps) {
-  const gap = 10
-  const circleRadius = 7
-  const width = 400
-  const height = 400
-
-  const getPosX = (i: number) =>
-    width / 2 - (images.length * (circleRadius * 2 + gap) - gap) / 2 + i * (circleRadius * 2 + gap)
-  const getPosY = () => height - 30
-
-  return (
-    <g>
-      {images.map((_, i) => (
-        <g key={i}>
-          <defs>
-            <radialGradient id={`tab-gradient-${i}`}>
-              <stop offset="0%" stopColor="white" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="white" stopOpacity="0" />
-            </radialGradient>
-          </defs>
-          <circle
-            onClick={() => onSelect(i)}
-            className="cursor-pointer fill-white/0 stroke-white/70 hover:stroke-white transition-all"
-            strokeWidth="2"
-            cx={getPosX(i)}
-            cy={getPosY()}
-            r={circleRadius + 2}
+      {/* Dots Indicator */}
+      <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
+        {images.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => goToSlide(index)}
+            className={cn(
+              "w-2 h-2 rounded-full transition-all duration-200",
+              index === currentIndex
+                ? "bg-white w-6"
+                : "bg-white/50 hover:bg-white/70"
+            )}
+            aria-label={`Перейти к фото ${index + 1}`}
           />
-        </g>
-      ))}
-    </g>
-  )
+        ))}
+      </div>
+
+      {/* Image Counter */}
+      <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-sm text-white text-xs font-medium">
+        {currentIndex + 1} / {images.length}
+      </div>
+    </div>
+  );
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Phone, User, MessageSquare, Check, CreditCard, PartyPopper } from 'lucide-react';
+import { MapPin, Phone, User, MessageSquare, CreditCard, PartyPopper } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -136,14 +136,7 @@ export default function CheckoutPage() {
       <div className="min-h-screen bg-background">
         {/* Header */}
         <header className="sticky top-0 z-50 safe-area-top bg-background/95 backdrop-blur-md border-b border-border">
-          <div className="container flex h-14 items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
+          <div className="container flex h-14 items-center justify-center">
             <h1 className="font-display text-xl font-semibold">Оформление</h1>
           </div>
         </header>

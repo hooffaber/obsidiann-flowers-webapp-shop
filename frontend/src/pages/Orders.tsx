@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Package, Clock, CheckCircle2, Truck, XCircle, ChevronDown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -7,15 +8,16 @@ import { BottomNav } from '@/components/shop/BottomNav';
 import { EmptyState } from '@/components/shop/EmptyState';
 import { useOrders, useOrder } from '@/hooks/useOrders';
 import { OrderStatus } from '@/types/shop';
+import { showBackButton, hideBackButton } from '@/lib/telegram';
 import { cn } from '@/lib/utils';
 
-const statusConfig: Record<OrderStatus, { label: string; icon: typeof Clock; color: string }> = {
-  new: { label: 'Новый', icon: Clock, color: 'text-muted-foreground' },
-  confirmed: { label: 'Подтверждён', icon: CheckCircle2, color: 'text-accent' },
-  in_progress: { label: 'Готовится', icon: Clock, color: 'text-primary' },
-  delivering: { label: 'Доставляется', icon: Truck, color: 'text-primary' },
-  done: { label: 'Доставлен', icon: CheckCircle2, color: 'text-accent' },
-  cancelled: { label: 'Отменён', icon: XCircle, color: 'text-destructive' },
+const statusConfig: Record<OrderStatus, { label: string; icon: typeof Clock; bgColor: string; textColor: string }> = {
+  new: { label: 'Новый', icon: Clock, bgColor: 'bg-blue-100', textColor: 'text-blue-700' },
+  confirmed: { label: 'Подтверждён', icon: CheckCircle2, bgColor: 'bg-violet-100', textColor: 'text-violet-700' },
+  in_progress: { label: 'Готовится', icon: Clock, bgColor: 'bg-amber-100', textColor: 'text-amber-700' },
+  delivering: { label: 'Доставляется', icon: Truck, bgColor: 'bg-cyan-100', textColor: 'text-cyan-700' },
+  done: { label: 'Доставлен', icon: CheckCircle2, bgColor: 'bg-green-100', textColor: 'text-green-700' },
+  cancelled: { label: 'Отменён', icon: XCircle, bgColor: 'bg-red-100', textColor: 'text-red-700' },
 };
 
 function OrderItemsLoader({ orderId }: { orderId: number }) {
@@ -77,15 +79,28 @@ function OrderItemsLoader({ orderId }: { orderId: number }) {
 }
 
 export default function OrdersPage() {
+  const navigate = useNavigate();
   const [expandedOrder, setExpandedOrder] = useState<number | null>(null);
   const { data: ordersData, isLoading, error } = useOrders();
 
   const orders = ordersData?.results || [];
 
+  useEffect(() => {
+    showBackButton(() => navigate('/profile'));
+    return () => hideBackButton();
+  }, [navigate]);
+
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ru-RU', {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
       day: 'numeric',
-      month: 'long',
+      month: 'short',
+    });
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('ru-RU', {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -141,7 +156,7 @@ export default function OrdersPage() {
 
       <main className="container py-4 pb-24">
         {orders.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {orders.map((order, index) => {
               const status = statusConfig[order.status] || statusConfig.new;
               const StatusIcon = status.icon;
@@ -150,7 +165,7 @@ export default function OrdersPage() {
               return (
                 <div
                   key={order.id}
-                  className="bg-card rounded-xl shadow-card animate-fade-in overflow-hidden"
+                  className="bg-card rounded-2xl shadow-card animate-fade-in overflow-hidden"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   {/* Clickable Header */}
@@ -158,31 +173,42 @@ export default function OrdersPage() {
                     onClick={() => toggleOrder(order.id)}
                     className="w-full p-4 text-left"
                   >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Заказ #{order.id} от {formatDate(order.created_at)}
-                        </p>
-                        <p className="font-semibold text-lg">
-                          {order.total_display}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className={cn("flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted text-sm", status.color)}>
-                          <StatusIcon className="h-4 w-4" />
-                          {order.status_display || status.label}
-                        </div>
-                        <ChevronDown className={cn(
-                          "h-5 w-5 text-muted-foreground transition-transform duration-200",
-                          isExpanded && "rotate-180"
-                        )} />
+                    {/* Top row: Order number + Status */}
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-medium text-foreground">
+                        Заказ #{order.id}
+                      </span>
+                      <div className={cn(
+                        "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
+                        status.bgColor,
+                        status.textColor
+                      )}>
+                        <StatusIcon className="h-3.5 w-3.5" />
+                        {order.status_display || status.label}
                       </div>
                     </div>
 
-                    {/* Customer Info */}
-                    <div className="text-sm text-muted-foreground">
-                      <p>{order.customer_name}</p>
-                      <p className="text-xs">{order.items_count} товар(ов)</p>
+                    {/* Middle: Price + Date/Time */}
+                    <div className="flex items-baseline justify-between mb-2">
+                      <span className="text-xl font-bold text-foreground">
+                        {order.total_display}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDate(order.created_at)}, {formatTime(order.created_at)}
+                      </span>
+                    </div>
+
+                    {/* Bottom: Customer + Items + Chevron */}
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-muted-foreground">
+                        <span>{order.customer_name}</span>
+                        <span className="mx-1.5">•</span>
+                        <span>{order.items_count} товар(ов)</span>
+                      </div>
+                      <ChevronDown className={cn(
+                        "h-5 w-5 text-muted-foreground transition-transform duration-200",
+                        isExpanded && "rotate-180"
+                      )} />
                     </div>
                   </button>
 
