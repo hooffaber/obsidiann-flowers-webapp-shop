@@ -26,6 +26,7 @@ main = [
 
     # Admin
     "django-unfold==0.75.0",
+    "django-tinymce==4.1.0",
 
     # API docs
     "drf-spectacular==0.29.0",

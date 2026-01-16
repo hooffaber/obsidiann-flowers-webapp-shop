@@ -1,9 +1,9 @@
 /**
  * React Query хуки для работы с товарами
  */
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { productsApi } from '@/lib/api';
-import type { ProductsFilter } from '@/types/shop';
+import type { ProductsFilter, PaginatedResponse, Product } from '@/types/shop';
 
 // Query keys
 export const productKeys = {
@@ -45,6 +45,43 @@ export function useProducts(filters?: ProductsFilter) {
   return useQuery({
     queryKey: productKeys.list(filters),
     queryFn: () => productsApi.getProducts(filters),
+    staleTime: 2 * 60 * 1000, // 2 минуты
+  });
+}
+
+/**
+ * Извлечь номер страницы из URL пагинации Django
+ */
+function getPageFromUrl(url: string | null): number | undefined {
+  if (!url) return undefined;
+  try {
+    const urlObj = new URL(url);
+    const page = urlObj.searchParams.get('page');
+    return page ? parseInt(page, 10) : undefined;
+  } catch {
+    // Если URL относительный, парсим по-другому
+    const match = url.match(/[?&]page=(\d+)/);
+    return match ? parseInt(match[1], 10) : undefined;
+  }
+}
+
+/**
+ * Infinite scroll для списка товаров
+ *
+ * Использует useInfiniteQuery для подгрузки страниц при скролле.
+ * Автоматически определяет следующую страницу из Django pagination.
+ */
+export function useInfiniteProducts(filters?: Omit<ProductsFilter, 'page'>) {
+  return useInfiniteQuery<PaginatedResponse<Product>, Error>({
+    queryKey: [...productKeys.lists(), 'infinite', filters] as const,
+    queryFn: async ({ pageParam }) => {
+      return productsApi.getProducts({ ...filters, page: pageParam as number });
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      // Django REST Framework возвращает URL следующей страницы или null
+      return getPageFromUrl(lastPage.next);
+    },
     staleTime: 2 * 60 * 1000, // 2 минуты
   });
 }

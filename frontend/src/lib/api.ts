@@ -155,6 +155,63 @@ export const ordersApi = {
     }),
 };
 
+// ============ Favorites API ============
+
+export const favoritesApi = {
+  /**
+   * Получить текущее избранное
+   */
+  getFavorites: () =>
+    request<Product[]>('/products/favorites/'),
+
+  /**
+   * Добавить товар в избранное
+   */
+  addFavorite: (productId: number) =>
+    request<{ detail: string; is_favorite: boolean }>('/products/favorites/', {
+      method: 'POST',
+      body: JSON.stringify({ product_id: productId }),
+    }),
+
+  /**
+   * Удалить товар из избранного
+   */
+  removeFavorite: (productId: number) =>
+    request<{ detail: string; is_favorite: boolean }>(`/products/favorites/${productId}/`, {
+      method: 'DELETE',
+    }),
+
+  /**
+   * Синхронизировать избранное (для миграции из localStorage)
+   */
+  syncFavorites: (productIds: number[]) =>
+    request<{ detail: string; added: number; removed: number }>('/products/favorites/sync/', {
+      method: 'POST',
+      body: JSON.stringify({ product_ids: productIds }),
+    }),
+
+  /**
+   * Проверить статусы товаров
+   */
+  checkFavorites: (productIds: number[]) =>
+    request<{ product_id: number; is_favorite: boolean }[]>('/products/favorites/check/', {
+      method: 'POST',
+      body: JSON.stringify({ product_ids: productIds }),
+    }),
+
+  /**
+   * Получить историю действий с избранным
+   */
+  getHistory: () =>
+    request<{
+      id: number;
+      product: Product;
+      action: 'added' | 'removed';
+      action_display: string;
+      created_at: string;
+    }[]>('/products/favorites/history/'),
+};
+
 // ============ Auth API ============
 
 export const authApi = {
@@ -186,12 +243,30 @@ export const authApi = {
     request<{ id: number; telegram_id: number; first_name: string; last_name: string; username: string }>('/auth/me/'),
 };
 
+// ============ Pages API ============
+
+export interface PageContent {
+  slug: string;
+  title: string;
+  content: string;
+}
+
+export const pagesApi = {
+  /**
+   * Получить контент страницы по slug
+   */
+  getPage: (slug: string) =>
+    request<PageContent>(`/pages/${slug}/`),
+};
+
 // ============ Export ============
 
 export const api = {
   products: productsApi,
   orders: ordersApi,
   auth: authApi,
+  favorites: favoritesApi,
+  pages: pagesApi,
 };
 
 export default api;

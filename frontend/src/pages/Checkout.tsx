@@ -15,6 +15,7 @@ import {
 import { useCartStore } from '@/stores/cartStore';
 import { useCreateOrder } from '@/hooks/useOrders';
 import { showBackButton, hideBackButton, hapticFeedback, getTelegramUser } from '@/lib/telegram';
+import { analytics } from '@/lib/analytics';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { formatPrice } from '@/lib/utils';
@@ -44,6 +45,9 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     showBackButton(() => navigate(-1));
+
+    // Track checkout start
+    analytics.trackCheckoutStart();
 
     // Pre-fill from Telegram user
     const tgUser = getTelegramUser();
@@ -94,7 +98,7 @@ export default function CheckoutPage() {
     }
 
     try {
-      await createOrder.mutateAsync({
+      const order = await createOrder.mutateAsync({
         customer_name: form.customer_name,
         customer_phone: form.customer_phone,
         delivery_address: form.delivery_address,
@@ -104,6 +108,7 @@ export default function CheckoutPage() {
       });
 
       hapticFeedback('success');
+      analytics.trackOrderComplete(order.id, order.total);
       setShowSuccessDialog(true);
     } catch (error) {
       hapticFeedback('error');

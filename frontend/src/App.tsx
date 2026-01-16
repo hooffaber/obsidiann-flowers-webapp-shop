@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { initAuth } from '@/stores/authStore';
+import { analytics } from '@/lib/analytics';
 import Index from "./pages/Index";
 import Product from "./pages/Product";
 import Favorites from "./pages/Favorites";
@@ -12,6 +13,8 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
 import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -27,6 +30,9 @@ function AppContent() {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
+    // Track app open
+    analytics.trackAppOpen();
+
     // Initialize authentication on app start
     initAuth()
       .catch((error) => {
@@ -58,6 +64,8 @@ function AppContent() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/about" element={<About />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
@@ -68,7 +76,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
-      <Sonner position="top-center" />
+      <Sonner position="bottom-center" offset={80} />
       <AppContent />
     </TooltipProvider>
   </QueryClientProvider>

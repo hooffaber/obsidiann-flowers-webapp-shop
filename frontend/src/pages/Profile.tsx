@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom';
-import { 
-  User, 
-  Package, 
-  Heart, 
+import {
+  User,
+  Package,
+  Heart,
   ChevronRight,
-  LogOut
+  LogOut,
+  Settings
 } from 'lucide-react';
 import { Header } from '@/components/shop/Header';
 import { BottomNav } from '@/components/shop/BottomNav';
@@ -34,19 +35,25 @@ const Profile = () => {
   const ordersCount = ordersData?.count || 0;
 
   const menuItems: MenuItem[] = [
-    { 
-      icon: Package, 
-      label: 'Мои заказы', 
+    {
+      icon: Package,
+      label: 'Мои заказы',
       link: '/orders',
       badge: ordersCount > 0 ? ordersCount : undefined,
       description: ordersCount > 0 ? `${ordersCount} заказов` : 'Нет заказов'
     },
-    { 
-      icon: Heart, 
-      label: 'Избранное', 
+    {
+      icon: Heart,
+      label: 'Избранное',
       link: '/favorites',
       badge: favoritesCount > 0 ? favoritesCount : undefined,
       description: favoritesCount > 0 ? `${favoritesCount} товаров` : 'Нет избранных'
+    },
+    {
+      icon: Settings,
+      label: 'Настройки',
+      link: '/settings',
+      description: 'Быстрый доступ и другое'
     },
   ];
 
@@ -149,7 +156,7 @@ const Profile = () => {
                 <p className="text-muted-foreground text-sm">{getUserHandle()}</p>
               )}
               {telegramUser?.is_premium && (
-                <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full mt-1">
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-primary bg-primary/15 px-2 py-0.5 rounded-full mt-1">
                   ⭐ Premium
                 </span>
               )}

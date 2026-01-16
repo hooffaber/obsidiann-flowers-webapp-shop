@@ -143,15 +143,15 @@ function isVersionAtLeast(current: string, required: string): boolean {
 export function initTelegramWebApp(): void {
   const tg = getTelegramWebApp() as any;
   if (!tg) return;
-  
+
   const version = tg.version || '6.0';
-  
+
   // Сообщаем что готовы
   tg.ready();
-  
+
   // Разворачиваем на весь экран
   tg.expand();
-  
+
   // Запрашиваем полноэкранный режим (Bot API 8.0+)
   if (isVersionAtLeast(version, '8.0') && tg.requestFullscreen) {
     try {
@@ -160,7 +160,7 @@ export function initTelegramWebApp(): void {
       // Ignore - not supported
     }
   }
-  
+
   // Отключаем вертикальные свайпы (Bot API 7.7+)
   if (isVersionAtLeast(version, '7.7') && tg.disableVerticalSwipes) {
     try {
@@ -169,10 +169,40 @@ export function initTelegramWebApp(): void {
       // Ignore - not supported
     }
   }
-  
+
+  // Устанавливаем CSS переменные для safe area (Bot API 7.0+)
+  updateSafeAreaInsets(tg);
+
+  // Слушаем изменения safe area
+  if (tg.onEvent) {
+    tg.onEvent('safeAreaChanged', () => updateSafeAreaInsets(tg));
+    tg.onEvent('contentSafeAreaChanged', () => updateSafeAreaInsets(tg));
+  }
+
   // Применяем тему
   if (tg.colorScheme === 'dark') {
     document.documentElement.classList.add('dark');
+  }
+}
+
+// Update CSS variables for safe area insets
+function updateSafeAreaInsets(tg: any): void {
+  const root = document.documentElement;
+
+  // Safe area insets (для устройств с вырезами)
+  if (tg.safeAreaInset) {
+    root.style.setProperty('--tg-safe-area-inset-top', `${tg.safeAreaInset.top || 0}px`);
+    root.style.setProperty('--tg-safe-area-inset-bottom', `${tg.safeAreaInset.bottom || 0}px`);
+    root.style.setProperty('--tg-safe-area-inset-left', `${tg.safeAreaInset.left || 0}px`);
+    root.style.setProperty('--tg-safe-area-inset-right', `${tg.safeAreaInset.right || 0}px`);
+  }
+
+  // Content safe area insets (для Telegram header/footer)
+  if (tg.contentSafeAreaInset) {
+    root.style.setProperty('--tg-content-safe-area-inset-top', `${tg.contentSafeAreaInset.top || 0}px`);
+    root.style.setProperty('--tg-content-safe-area-inset-bottom', `${tg.contentSafeAreaInset.bottom || 0}px`);
+    root.style.setProperty('--tg-content-safe-area-inset-left', `${tg.contentSafeAreaInset.left || 0}px`);
+    root.style.setProperty('--tg-content-safe-area-inset-right', `${tg.contentSafeAreaInset.right || 0}px`);
   }
 }
 
@@ -227,6 +257,28 @@ export function showBackButton(onClick: () => void): void {
 export function hideBackButton(): void {
   const tg = getTelegramWebApp();
   if (!tg?.BackButton) return;
-  
+
   tg.BackButton.hide();
+}
+
+// Add to home screen (Bot API 8.0+)
+export function canAddToHomeScreen(): boolean {
+  const tg = getTelegramWebApp() as any;
+  return !!tg?.addToHomeScreen;
+}
+
+export function addToHomeScreen(): void {
+  const tg = getTelegramWebApp() as any;
+  if (tg?.addToHomeScreen) {
+    tg.addToHomeScreen();
+  }
+}
+
+export function checkHomeScreenStatus(callback: (status: 'added' | 'missed' | 'unsupported' | 'unknown') => void): void {
+  const tg = getTelegramWebApp() as any;
+  if (tg?.checkHomeScreenStatus) {
+    tg.checkHomeScreenStatus(callback);
+  } else {
+    callback('unsupported');
+  }
 }

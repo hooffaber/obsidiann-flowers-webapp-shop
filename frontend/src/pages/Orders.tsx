@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Clock, CheckCircle2, Truck, XCircle, ChevronDown, Loader2 } from 'lucide-react';
+import { Package, Clock, CheckCircle2, Truck, XCircle, ChevronDown, Loader2, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Header } from '@/components/shop/Header';
@@ -12,12 +12,12 @@ import { showBackButton, hideBackButton } from '@/lib/telegram';
 import { cn } from '@/lib/utils';
 
 const statusConfig: Record<OrderStatus, { label: string; icon: typeof Clock; bgColor: string; textColor: string }> = {
-  new: { label: 'Новый', icon: Clock, bgColor: 'bg-blue-100', textColor: 'text-blue-700' },
-  confirmed: { label: 'Подтверждён', icon: CheckCircle2, bgColor: 'bg-violet-100', textColor: 'text-violet-700' },
-  in_progress: { label: 'Готовится', icon: Clock, bgColor: 'bg-amber-100', textColor: 'text-amber-700' },
-  delivering: { label: 'Доставляется', icon: Truck, bgColor: 'bg-cyan-100', textColor: 'text-cyan-700' },
-  done: { label: 'Доставлен', icon: CheckCircle2, bgColor: 'bg-green-100', textColor: 'text-green-700' },
-  cancelled: { label: 'Отменён', icon: XCircle, bgColor: 'bg-red-100', textColor: 'text-red-700' },
+  new: { label: 'Новый', icon: Clock, bgColor: 'bg-blue-500/20', textColor: 'text-blue-400' },
+  confirmed: { label: 'Подтверждён', icon: CheckCircle2, bgColor: 'bg-violet-500/20', textColor: 'text-violet-400' },
+  in_progress: { label: 'Готовится', icon: Clock, bgColor: 'bg-amber-500/20', textColor: 'text-amber-400' },
+  delivering: { label: 'Доставляется', icon: Truck, bgColor: 'bg-cyan-500/20', textColor: 'text-cyan-400' },
+  done: { label: 'Доставлен', icon: CheckCircle2, bgColor: 'bg-green-500/20', textColor: 'text-green-400' },
+  cancelled: { label: 'Отменён', icon: XCircle, bgColor: 'bg-red-500/20', textColor: 'text-red-400' },
 };
 
 function OrderItemsLoader({ orderId }: { orderId: number }) {
@@ -74,6 +74,19 @@ function OrderItemsLoader({ orderId }: { orderId: number }) {
           {orderDetail.total_display}
         </span>
       </div>
+
+      {/* Delivery address */}
+      {orderDetail.delivery_address && (
+        <div className="mt-4 pt-3 border-t border-border">
+          <div className="flex items-start gap-2">
+            <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Адрес доставки</p>
+              <p className="text-sm text-foreground">{orderDetail.delivery_address}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -454,6 +454,18 @@ wheels = [
 ]
 
 [[package]]
+name = "django-tinymce"
+version = "4.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b3/36/56faa2cb1bde28c66ffe38d67ddbacab9c416baecbb7dd911bfabc5fa409/django_tinymce-4.1.0.tar.gz", hash = "sha256:02e3b70e940fd299f0fbef4315aee5c185664e1eb8cd396b176963954e4357c9", size = 1087250, upload-time = "2024-06-21T07:07:03.915Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/91/a6/467464d08495360689380906db8e67427c381545ce8af9ce633e0128b004/django_tinymce-4.1.0-py3-none-any.whl", hash = "sha256:9804836e6d2b08de3b03a27c100f8c2e9633549913eff8b323678a10cd48b94e", size = 1317923, upload-time = "2024-06-21T07:07:40.454Z" },
+]
+
+[[package]]
 name = "django-unfold"
 version = "0.75.0"
 source = { registry = "https://pypi.org/simple" }
@@ -576,6 +588,7 @@ dev = [
     { name = "django-health-check" },
     { name = "django-storages" },
     { name = "django-stubs" },
+    { name = "django-tinymce" },
     { name = "django-unfold" },
     { name = "djangorestframework" },
     { name = "djangorestframework-simplejwt" },
@@ -618,6 +631,7 @@ main = [
     { name = "django-filter" },
     { name = "django-health-check" },
     { name = "django-storages" },
+    { name = "django-tinymce" },
     { name = "django-unfold" },
     { name = "djangorestframework" },
     { name = "djangorestframework-simplejwt" },
@@ -658,6 +672,7 @@ dev = [
     { name = "django-health-check", specifier = "==3.20.0" },
     { name = "django-storages", specifier = "==1.14.6" },
     { name = "django-stubs", specifier = ">=5.2.1" },
+    { name = "django-tinymce", specifier = "==4.1.0" },
     { name = "django-unfold", specifier = "==0.75.0" },
     { name = "djangorestframework", specifier = "==3.16.1" },
     { name = "djangorestframework-simplejwt", specifier = "==5.5.1" },
@@ -700,6 +715,7 @@ main = [
     { name = "django-filter", specifier = "==25.1" },
     { name = "django-health-check", specifier = "==3.20.0" },
     { name = "django-storages", specifier = "==1.14.6" },
+    { name = "django-tinymce", specifier = "==4.1.0" },
     { name = "django-unfold", specifier = "==0.75.0" },
     { name = "djangorestframework", specifier = "==3.16.1" },
     { name = "djangorestframework-simplejwt", specifier = "==5.5.1" },

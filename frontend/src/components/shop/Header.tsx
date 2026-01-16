@@ -1,8 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, X } from 'lucide-react';
+import { Search, X, Menu, Info } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetClose,
+} from '@/components/ui/sheet';
 
 interface HeaderProps {
   onSearch?: (query: string) => void;
@@ -13,21 +19,69 @@ interface HeaderProps {
 export function Header({ onSearch, showSearch = true, title }: HeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  
+  const [menuOpen, setMenuOpen] = useState(false);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch?.(searchQuery);
   };
-  
+
   return (
-    <header className="sticky top-0 z-50 safe-area-top bg-background/95 backdrop-blur-md border-b border-border">
+    <header className="sticky top-0 z-50 tg-header-offset bg-background/95 backdrop-blur-md">
       <div className="container flex h-14 items-center justify-center gap-4 relative">
-        {/* Search button - left side */}
+        {/* Burger menu - left side */}
+        <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute left-4"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-72 p-0 pt-20" hideCloseButton>
+            {/* Custom header with close button */}
+            <div className="flex items-center gap-3 p-4">
+              <SheetClose asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <X className="h-5 w-5" />
+                </Button>
+              </SheetClose>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🌸</span>
+                <span className="font-display text-lg font-semibold">Bloom</span>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <nav className="p-4 flex flex-col gap-2">
+              <Link
+                to="/about"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-muted transition-colors"
+              >
+                <Info className="h-5 w-5 text-muted-foreground" />
+                <span>О нас</span>
+              </Link>
+            </nav>
+          </SheetContent>
+        </Sheet>
+
+        {/* Logo - center */}
+        <Link to="/" className="flex items-center gap-2">
+          <span className="text-2xl">🌸</span>
+          <span className="font-display text-xl font-semibold text-foreground">
+            {title || 'Bloom'}
+          </span>
+        </Link>
+
+        {/* Search button - right side */}
         {showSearch && (
           <Button
             variant="ghost"
             size="icon"
-            className="absolute left-4"
+            className="absolute right-4"
             onClick={() => setSearchOpen(!searchOpen)}
           >
             {searchOpen ? (
@@ -37,16 +91,8 @@ export function Header({ onSearch, showSearch = true, title }: HeaderProps) {
             )}
           </Button>
         )}
-        
-        {/* Logo - center */}
-        <Link to="/" className="flex items-center gap-2">
-          <span className="text-2xl">🌸</span>
-          <span className="font-display text-xl font-semibold text-foreground">
-            {title || 'Bloom'}
-          </span>
-        </Link>
       </div>
-      
+
       {/* Mobile Search Bar */}
       {showSearch && searchOpen && (
         <div className="px-4 pb-3 animate-slide-up">

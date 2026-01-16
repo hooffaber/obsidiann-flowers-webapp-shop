@@ -39,9 +39,6 @@ body {
   bottom: 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
-  /* Safe area для телефонов с вырезами */
-  padding-top: var(--tg-content-safe-area-inset-top, env(safe-area-inset-top, 0));
-  padding-bottom: var(--tg-content-safe-area-inset-bottom, env(safe-area-inset-bottom, 0));
 }
 
 #root {
@@ -50,8 +47,77 @@ body {
 
 @layer base {
   :root {
-    /* Warm Beige Flower Shop Palette */
-    --background: 30 30% 94%; /* #f3ede6 - тёплый бежевый */
+    /* Dark Warm Palette - глубокий тёмный с тёплыми акцентами */
+    --background: 20 15% 4%; /* Почти чёрный с тёплым оттенком */
+    --foreground: 35 20% 92%; /* Светло-бежевый текст */
+
+    --card: 20 12% 7%; /* Тёмные карточки */
+    --card-foreground: 35 20% 92%;
+
+    --popover: 20 12% 8%;
+    --popover-foreground: 35 20% 92%;
+
+    /* Тёплый терракотовый primary */
+    --primary: 25 60% 55%; /* Яркий терракотовый */
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 25 30% 12%;
+
+    /* Приглушённый secondary */
+    --secondary: 30 20% 14%;
+    --secondary-foreground: 35 20% 90%;
+
+    /* Тёмный muted */
+    --muted: 20 10% 10%;
+    --muted-foreground: 30 12% 45%;
+
+    /* Тёплый коричневый accent */
+    --accent: 30 45% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 60% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 25 10% 12%;
+    --input: 25 10% 12%;
+    --ring: 25 60% 55%;
+
+    --radius: 0.75rem;
+
+    /* Custom gradients - глубокие тёмные версии */
+    --gradient-hero: linear-gradient(135deg, hsl(20 15% 5%) 0%, hsl(25 12% 7%) 50%, hsl(20 15% 5%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(20 12% 8%) 0%, hsl(20 12% 6%) 100%);
+    --gradient-badge-new: linear-gradient(135deg, hsl(30 40% 35%) 0%, hsl(35 35% 40%) 100%);
+    --gradient-badge-hit: linear-gradient(135deg, hsl(25 60% 50%) 0%, hsl(20 55% 55%) 100%);
+
+    /* Shadows - более мягкие для тёмной темы */
+    --shadow-sm: 0 2px 8px -2px hsl(0 0% 0% / 0.4);
+    --shadow-md: 0 8px 24px -8px hsl(0 0% 0% / 0.5);
+    --shadow-lg: 0 16px 48px -12px hsl(0 0% 0% / 0.6);
+    --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.5);
+    --shadow-button: 0 4px 16px -2px hsl(25 60% 40% / 0.4);
+
+    /* Sidebar */
+    --sidebar-background: 20 15% 5%;
+    --sidebar-foreground: 35 20% 90%;
+    --sidebar-primary: 25 60% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 25 15% 10%;
+    --sidebar-accent-foreground: 35 20% 90%;
+    --sidebar-border: 25 10% 12%;
+    --sidebar-ring: 25 60% 55%;
+
+    /* Telegram WebApp theme */
+    --tg-theme-bg-color: hsl(20 15% 4%);
+    --tg-theme-text-color: hsl(35 20% 92%);
+    --tg-theme-hint-color: hsl(30 12% 45%);
+    --tg-theme-link-color: hsl(25 60% 55%);
+    --tg-theme-button-color: hsl(25 60% 55%);
+    --tg-theme-button-text-color: hsl(0 0% 100%);
+  }
+
+  /* Светлая тема (если понадобится) */
+  .light {
+    --background: 30 30% 94%;
     --foreground: 0 0% 0%;
 
     --card: 40 30% 99%;
@@ -60,20 +126,16 @@ body {
     --popover: 40 30% 99%;
     --popover-foreground: 0 0% 0%;
 
-    /* Warm terracotta primary */
     --primary: 25 55% 50%;
     --primary-foreground: 40 30% 98%;
     --primary-soft: 30 40% 92%;
 
-    /* Muted olive secondary */
     --secondary: 45 25% 35%;
     --secondary-foreground: 40 30% 98%;
 
-    /* Light beige muted */
     --muted: 35 30% 92%;
     --muted-foreground: 25 20% 45%;
 
-    /* Warm brown accent */
     --accent: 30 40% 40%;
     --accent-foreground: 40 30% 98%;
 
@@ -84,22 +146,6 @@ body {
     --input: 35 25% 88%;
     --ring: 25 55% 50%;
 
-    --radius: 0.75rem;
-
-    /* Custom gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(35 40% 94%) 0%, hsl(40 35% 96%) 50%, hsl(30 30% 94%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(40 30% 99%) 0%, hsl(35 30% 96%) 100%);
-    --gradient-badge-new: linear-gradient(135deg, hsl(45 35% 40%) 0%, hsl(50 30% 45%) 100%);
-    --gradient-badge-hit: linear-gradient(135deg, hsl(25 55% 50%) 0%, hsl(20 50% 55%) 100%);
-
-    /* Shadows */
-    --shadow-sm: 0 2px 8px -2px hsl(25 30% 20% / 0.06);
-    --shadow-md: 0 8px 24px -8px hsl(25 30% 20% / 0.10);
-    --shadow-lg: 0 16px 48px -12px hsl(25 30% 20% / 0.12);
-    --shadow-card: 0 4px 16px -4px hsl(25 30% 20% / 0.06);
-    --shadow-button: 0 4px 12px -2px hsl(25 55% 50% / 0.25);
-
-    /* Sidebar */
     --sidebar-background: 35 30% 97%;
     --sidebar-foreground: 25 25% 25%;
     --sidebar-primary: 25 30% 15%;
@@ -108,54 +154,6 @@ body {
     --sidebar-accent-foreground: 25 30% 15%;
     --sidebar-border: 35 25% 88%;
     --sidebar-ring: 25 55% 50%;
-
-    /* Telegram WebApp theme */
-    --tg-theme-bg-color: hsl(35 35% 96%);
-    --tg-theme-text-color: hsl(25 30% 15%);
-    --tg-theme-hint-color: hsl(25 20% 45%);
-    --tg-theme-link-color: hsl(25 55% 50%);
-    --tg-theme-button-color: hsl(25 55% 50%);
-    --tg-theme-button-text-color: hsl(40 30% 98%);
-  }
-
-  .dark {
-    --background: 25 20% 10%;
-    --foreground: 35 30% 94%;
-
-    --card: 25 18% 14%;
-    --card-foreground: 35 30% 94%;
-
-    --popover: 25 18% 14%;
-    --popover-foreground: 35 30% 94%;
-
-    --primary: 25 50% 55%;
-    --primary-foreground: 0 0% 100%;
-    --primary-soft: 25 25% 22%;
-
-    --secondary: 40 20% 28%;
-    --secondary-foreground: 35 30% 94%;
-
-    --muted: 25 15% 20%;
-    --muted-foreground: 30 15% 55%;
-
-    --accent: 30 35% 45%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 55% 45%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 25 15% 22%;
-    --input: 25 15% 22%;
-    --ring: 25 50% 55%;
-
-    --sidebar-background: 25 20% 12%;
-    --sidebar-foreground: 35 30% 92%;
-    --sidebar-primary: 25 50% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 25 15% 18%;
-    --sidebar-accent-foreground: 35 30% 92%;
-    --sidebar-border: 25 15% 18%;
-    --sidebar-ring: 25 50% 55%;
   }
 }
 
@@ -206,11 +204,20 @@ body {
 
   /* Telegram WebApp safe area */
   .safe-area-top {
-    padding-top: env(safe-area-inset-top, 0);
+    padding-top: calc(var(--tg-content-safe-area-inset-top, 0px) + var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px)));
   }
 
   .safe-area-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-bottom: calc(var(--tg-content-safe-area-inset-bottom, 0px) + var(--tg-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
+  }
+
+  /* Extra top padding for Telegram header buttons */
+  /* Учитывает safe-area для устройств с вырезами + минимум для Telegram кнопок */
+  .tg-header-offset {
+    padding-top: max(
+      24px,
+      calc(var(--tg-content-safe-area-inset-top, 0px) + var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px)))
+    );
   }
 
   /* Smooth animations */

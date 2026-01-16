@@ -76,6 +76,32 @@ UNFOLD = {
                     },
                 ],
             },
+            {
+                'title': 'Статистика',
+                'separator': True,
+                'items': [
+                    {
+                        'title': 'По приложению',
+                        'icon': 'monitoring',
+                        'link': reverse_lazy('admin:analytics_dailystats_changelist'),
+                    },
+                    {
+                        'title': 'По клиенту',
+                        'icon': 'person_search',
+                        'link': reverse_lazy('admin:analytics_customerstats_changelist'),
+                    },
+                    {
+                        'title': 'События',
+                        'icon': 'analytics',
+                        'link': reverse_lazy('admin:analytics_analyticsevent_changelist'),
+                    },
+                    {
+                        'title': 'История избранного',
+                        'icon': 'favorite',
+                        'link': reverse_lazy('admin:products_favoriteaction_changelist'),
+                    },
+                ],
+            },
         ],
     },
 }

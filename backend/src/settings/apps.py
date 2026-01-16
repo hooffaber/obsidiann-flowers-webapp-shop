@@ -14,6 +14,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Third party
+    'tinymce',
     'rest_framework',
     'rest_framework_simplejwt',
     'django_filters',
@@ -33,6 +34,7 @@ INSTALLED_APPS = [
     'apps.cart',
     'apps.orders',
     'apps.payments',
+    'apps.analytics',
 ]
 
 MIDDLEWARE = [

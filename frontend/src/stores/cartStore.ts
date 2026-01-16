@@ -58,6 +58,10 @@ export const useCartStore = create<CartState>()(
         set((state) => ({
           items: state.items.filter(item => item.product_id !== productId),
         }));
+        // Track cart remove
+        import('@/lib/analytics').then(({ analytics }) => {
+          analytics.trackCartRemove(productId);
+        });
       },
       
       updateQuantity: (productId: number, quantity: number) => {

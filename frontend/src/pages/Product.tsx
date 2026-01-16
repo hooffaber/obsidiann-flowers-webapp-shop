@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Heart, Minus, Plus, ShoppingBag, Check } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProduct } from '@/hooks/useProducts';
 import { useCartStore } from '@/stores/cartStore';
 import { useFavoritesStore } from '@/stores/favoritesStore';
 import { hapticFeedback, showBackButton, hideBackButton } from '@/lib/telegram';
+import { analytics } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 import { ProductImageGallery } from '@/components/shop/ProductImageGallery';
 
@@ -27,6 +29,13 @@ export default function ProductPage() {
     showBackButton(() => navigate(-1));
     return () => hideBackButton();
   }, [navigate]);
+
+  // Track product view
+  useEffect(() => {
+    if (product) {
+      analytics.trackProductView(product.id);
+    }
+  }, [product]);
 
   if (isLoading) {
     return (
@@ -67,13 +76,27 @@ export default function ProductPage() {
     addItem(product, quantity);
     setAddedToCart(true);
     hapticFeedback('success');
+    analytics.trackCartAdd(product.id, quantity);
 
     setTimeout(() => setAddedToCart(false), 2000);
   };
 
   const handleToggleFavorite = () => {
+    const wasLiked = isLiked;
     toggleFavorite(product);
     hapticFeedback('light');
+
+    if (wasLiked) {
+      toast('Удалено из избранного', {
+        id: 'favorite-toast',
+        icon: <Heart className="h-4 w-4" />,
+      });
+    } else {
+      toast('Добавлено в избранное', {
+        id: 'favorite-toast',
+        icon: <Heart className="h-4 w-4 fill-primary text-primary" />,
+      });
+    }
   };
 
   const isOutOfStock = !product.is_available;

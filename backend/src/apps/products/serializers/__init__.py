@@ -1,5 +1,11 @@
 """Products serializers."""
 from apps.products.serializers.category import CategorySerializer
+from apps.products.serializers.favorite import (
+    FavoriteActionSerializer,
+    FavoriteBulkSerializer,
+    FavoriteStatusSerializer,
+    FavoriteToggleSerializer,
+)
 from apps.products.serializers.product import (
     ProductDetailSerializer,
     ProductImageSerializer,
@@ -8,7 +14,11 @@ from apps.products.serializers.product import (
 
 __all__ = [
     'CategorySerializer',
-    'ProductListSerializer',
+    'FavoriteActionSerializer',
+    'FavoriteBulkSerializer',
+    'FavoriteStatusSerializer',
+    'FavoriteToggleSerializer',
     'ProductDetailSerializer',
     'ProductImageSerializer',
+    'ProductListSerializer',
 ]

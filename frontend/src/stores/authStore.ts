@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { getTelegramInitData, isTelegramWebApp } from '@/lib/telegram';
+import { initFavorites } from '@/stores/favoritesStore';
 
 interface User {
   id: number;
@@ -106,11 +107,12 @@ export const useAuthStore = create<AuthState>()(
  * Инициализация авторизации при запуске приложения
  */
 export async function initAuth(): Promise<void> {
-  // Если уже авторизован — ничего не делаем
+  // Если уже авторизован — синхронизируем избранное и выходим
   if (useAuthStore.getState().isAuthenticated) {
+    await initFavorites();
     return;
   }
-  
+
   // Если мы в Telegram WebApp — пытаемся авторизоваться
   if (isTelegramWebApp()) {
     const initData = getTelegramInitData();
@@ -124,10 +126,12 @@ export async function initAuth(): Promise<void> {
             body: JSON.stringify({ init_data: initData }),
           }
         );
-        
+
         if (response.ok) {
           const data = await response.json();
           useAuthStore.getState().setAuth(data.user, data.tokens);
+          // Синхронизируем избранное после успешной авторизации
+          await initFavorites();
         }
       } catch (error) {
         console.error('Failed to authenticate with Telegram:', error);

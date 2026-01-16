@@ -11,6 +11,7 @@ from settings.logging import *  # noqa: F401, F403
 from settings.rest_framework import *  # noqa: F401, F403
 from settings.storage import *  # noqa: F401, F403
 from settings.telegram import *  # noqa: F401, F403
+from settings.tinymce import *  # noqa: F401, F403
 from settings.unfold import *  # noqa: F401, F403
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.

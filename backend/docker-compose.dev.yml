@@ -40,5 +40,37 @@ services:
     ports:
       - "6379:6379"
 
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: celery -A celery_app worker -l info
+    env_file:
+      - .env
+    environment:
+      - DEBUG=true
+    depends_on:
+      - redis
+      - postgres
+    volumes:
+      - ./src:/app/src
+    restart: unless-stopped
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: celery -A celery_app beat -l info
+    env_file:
+      - .env
+    environment:
+      - DEBUG=true
+    depends_on:
+      - redis
+      - postgres
+    volumes:
+      - ./src:/app/src
+    restart: unless-stopped
+
 volumes:
   postgres_data:

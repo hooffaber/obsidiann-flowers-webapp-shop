@@ -11,6 +11,7 @@ from drf_spectacular.views import (
 urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
+    path('tinymce/', include('tinymce.urls')),
 
     # API v1
     path('api/v1/', include([
@@ -19,6 +20,8 @@ urlpatterns = [
         path('cart/', include('apps.cart.urls')),
         path('orders/', include('apps.orders.urls')),
         path('payments/', include('apps.payments.urls')),
+        path('analytics/', include('apps.analytics.urls')),
+        path('', include('apps.core.urls')),
     ])),
 
     # Health check

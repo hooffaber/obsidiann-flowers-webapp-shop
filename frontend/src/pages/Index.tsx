@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Header } from '@/components/shop/Header';
 import { BottomNav } from '@/components/shop/BottomNav';
 import { CategoryChips, SortOption } from '@/components/shop/CategoryChips';
 import { ProductCard } from '@/components/shop/ProductCard';
-import { useProducts, useCategories } from '@/hooks/useProducts';
+import { useInfiniteProducts, useCategories } from '@/hooks/useProducts';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Loader2 } from 'lucide-react';
+import { analytics } from '@/lib/analytics';
 
 const sortToOrdering: Record<SortOption, string | undefined> = {
   default: undefined,
@@ -18,19 +20,82 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('default');
 
+  // Ref для IntersectionObserver (элемент внизу списка)
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
   // Fetch data from API
   const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
-  const { data: productsData, isLoading: productsLoading } = useProducts({
+  const {
+    data: productsData,
+    isLoading: productsLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteProducts({
     category: selectedCategory || undefined,
     search: searchQuery || undefined,
     ordering: sortToOrdering[sortBy],
   });
 
   const categories = categoriesData || [];
-  const products = productsData?.results || [];
+
+  // Собираем все товары из всех загруженных страниц
+  const products = productsData?.pages.flatMap(page => page.results) || [];
+  const totalCount = productsData?.pages[0]?.count || 0;
+
+  // IntersectionObserver для автоматической подгрузки
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const [target] = entries;
+      if (target.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+    [fetchNextPage, hasNextPage, isFetchingNextPage]
+  );
+
+  useEffect(() => {
+    const element = loadMoreRef.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(handleObserver, {
+      root: null, // viewport
+      rootMargin: '100px', // Начинаем загрузку за 100px до конца
+      threshold: 0,
+    });
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [handleObserver]);
+
+  // Debounce timer for search tracking
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+
+    // Track search with debounce
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    if (query.trim()) {
+      searchTimeoutRef.current = setTimeout(() => {
+        analytics.trackSearch(query);
+      }, 1000);
+    }
+  };
+
+  const handleCategorySelect = (slug: string | null) => {
+    setSelectedCategory(slug);
+
+    // Track category view
+    if (slug) {
+      const category = categories.find(c => c.slug === slug);
+      if (category) {
+        analytics.trackCategoryView(category.id);
+      }
+    }
   };
 
   return (
@@ -64,7 +129,7 @@ const Index = () => {
             <CategoryChips
               categories={categories}
               selectedSlug={selectedCategory}
-              onSelect={setSelectedCategory}
+              onSelect={handleCategorySelect}
               sortBy={sortBy}
               onSortChange={setSortBy}
             />
@@ -86,15 +151,34 @@ const Index = () => {
               ))}
             </div>
           ) : products.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-              {products.map((product, index) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  index={index}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                {products.map((product, index) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    index={index}
+                  />
+                ))}
+              </div>
+
+              {/* Индикатор загрузки следующей страницы */}
+              {isFetchingNextPage && (
+                <div className="flex justify-center py-6">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              )}
+
+              {/* Триггер для IntersectionObserver */}
+              <div ref={loadMoreRef} className="h-1" />
+
+              {/* Показываем счётчик только когда загружены не все товары */}
+              {!hasNextPage && products.length > 0 && (
+                <div className="mt-6 text-center text-sm text-muted-foreground">
+                  Показаны все {totalCount} товаров
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-16">
               <p className="text-muted-foreground">
@@ -105,13 +189,6 @@ const Index = () => {
             </div>
           )}
         </section>
-
-        {/* Pagination info */}
-        {productsData && productsData.count > 0 && (
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            Показано {products.length} из {productsData.count} товаров
-          </div>
-        )}
       </main>
 
       <BottomNav />

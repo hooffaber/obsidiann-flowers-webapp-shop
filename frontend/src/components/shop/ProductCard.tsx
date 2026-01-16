@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, Plus, Check } from 'lucide-react';
+import { toast } from 'sonner';
 import { Product } from '@/types/shop';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/stores/cartStore';
 import { useFavoritesStore } from '@/stores/favoritesStore';
 import { hapticFeedback } from '@/lib/telegram';
+import { analytics } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 
 interface ProductCardProps {
@@ -32,16 +34,34 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
     addItem(product);
     setAddedToCart(true);
     hapticFeedback('success');
+    analytics.trackCartAdd(product.id);
 
     setTimeout(() => setAddedToCart(false), 1500);
+  };
+
+  const handleProductClick = () => {
+    analytics.trackProductClick(product.id);
   };
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
+    const wasLiked = isLiked;
     toggleFavorite(product);
     hapticFeedback('light');
+
+    if (wasLiked) {
+      toast('Удалено из избранного', {
+        id: 'favorite-toast',
+        icon: <Heart className="h-4 w-4" />,
+      });
+    } else {
+      toast('Добавлено в избранное', {
+        id: 'favorite-toast',
+        icon: <Heart className="h-4 w-4 fill-primary text-primary" />,
+      });
+    }
   };
 
   return (
@@ -49,6 +69,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
       to={`/product/${product.slug}`}
       className="group block animate-fade-in"
       style={{ animationDelay: `${index * 50}ms` }}
+      onClick={handleProductClick}
     >
       <div className="relative h-full bg-card rounded-2xl overflow-hidden shadow-card transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 flex flex-col">
         {/* Image */}

@@ -6,7 +6,7 @@ from unfold.admin import ModelAdmin, TabularInline
 from unfold.contrib.filters.admin import RangeDateFilter
 from unfold.decorators import display
 
-from apps.products.models import Category, Product, ProductImage
+from apps.products.models import Category, FavoriteAction, Product, ProductImage
 
 
 @admin.register(Category)
@@ -179,3 +179,60 @@ class ProductImageAdmin(ModelAdmin):
     @display(description='Главное', label={True: 'success', False: 'info'})
     def show_main(self, obj):
         return obj.is_main, '★ Главное' if obj.is_main else 'Доп.'
+
+
+@admin.register(FavoriteAction)
+class FavoriteActionAdmin(ModelAdmin):
+    """Админка истории избранного."""
+    list_display = [
+        'id',
+        'show_user',
+        'show_product',
+        'show_action',
+        'created_at',
+    ]
+    list_filter = [
+        'action',
+        ('created_at', RangeDateFilter),
+        'product__category',
+    ]
+    search_fields = [
+        'user__username',
+        'user__first_name',
+        'user__last_name',
+        'product__title',
+    ]
+    autocomplete_fields = ['user', 'product']
+    ordering = ['-created_at']
+    list_per_page = 50
+    date_hierarchy = 'created_at'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'product')
+
+    @display(description='Пользователь')
+    def show_user(self, obj):
+        username = obj.user.username
+        # Если username похож на Telegram username (не автогенерированный)
+        if username and not username.startswith('telegram_user_'):
+            return format_html(
+                '<a href="https://t.me/{}" target="_blank" style="color: #0ea5e9; text-decoration: none;">@{}</a>',
+                username, username
+            )
+        # Fallback на telegram_id
+        if obj.user.telegram_id:
+            return format_html(
+                '<span style="color: #6b7280;">ID: {}</span>',
+                obj.user.telegram_id
+            )
+        return obj.user.get_full_name() or username
+
+    @display(description='Товар')
+    def show_product(self, obj):
+        return obj.product.title
+
+    @display(description='Действие', label={'added': 'success', 'removed': 'warning'})
+    def show_action(self, obj):
+        if obj.action == 'added':
+            return obj.action, '❤️ Добавлено'
+        return obj.action, '💔 Удалено'
