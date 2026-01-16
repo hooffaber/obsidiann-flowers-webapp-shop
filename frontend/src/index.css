@@ -1,0 +1,265 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Hide scrollbar globally */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+@layer base {
+  :root {
+    /* Warm Beige Flower Shop Palette */
+    --background: 35 35% 96%;
+    --foreground: 0 0% 0%;
+
+    --card: 40 30% 99%;
+    --card-foreground: 0 0% 0%;
+
+    --popover: 40 30% 99%;
+    --popover-foreground: 0 0% 0%;
+
+    /* Warm terracotta primary */
+    --primary: 25 55% 50%;
+    --primary-foreground: 40 30% 98%;
+    --primary-soft: 30 40% 92%;
+
+    /* Muted olive secondary */
+    --secondary: 45 25% 35%;
+    --secondary-foreground: 40 30% 98%;
+
+    /* Light beige muted */
+    --muted: 35 30% 92%;
+    --muted-foreground: 25 20% 45%;
+
+    /* Warm brown accent */
+    --accent: 30 40% 40%;
+    --accent-foreground: 40 30% 98%;
+
+    --destructive: 0 65% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 35 25% 85%;
+    --input: 35 25% 88%;
+    --ring: 25 55% 50%;
+
+    --radius: 0.75rem;
+
+    /* Custom gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(35 40% 94%) 0%, hsl(40 35% 96%) 50%, hsl(30 30% 94%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(40 30% 99%) 0%, hsl(35 30% 96%) 100%);
+    --gradient-badge-new: linear-gradient(135deg, hsl(45 35% 40%) 0%, hsl(50 30% 45%) 100%);
+    --gradient-badge-hit: linear-gradient(135deg, hsl(25 55% 50%) 0%, hsl(20 50% 55%) 100%);
+
+    /* Shadows */
+    --shadow-sm: 0 2px 8px -2px hsl(25 30% 20% / 0.06);
+    --shadow-md: 0 8px 24px -8px hsl(25 30% 20% / 0.10);
+    --shadow-lg: 0 16px 48px -12px hsl(25 30% 20% / 0.12);
+    --shadow-card: 0 4px 16px -4px hsl(25 30% 20% / 0.06);
+    --shadow-button: 0 4px 12px -2px hsl(25 55% 50% / 0.25);
+
+    /* Sidebar */
+    --sidebar-background: 35 30% 97%;
+    --sidebar-foreground: 25 25% 25%;
+    --sidebar-primary: 25 30% 15%;
+    --sidebar-primary-foreground: 35 30% 97%;
+    --sidebar-accent: 35 30% 93%;
+    --sidebar-accent-foreground: 25 30% 15%;
+    --sidebar-border: 35 25% 88%;
+    --sidebar-ring: 25 55% 50%;
+
+    /* Telegram WebApp theme */
+    --tg-theme-bg-color: hsl(35 35% 96%);
+    --tg-theme-text-color: hsl(25 30% 15%);
+    --tg-theme-hint-color: hsl(25 20% 45%);
+    --tg-theme-link-color: hsl(25 55% 50%);
+    --tg-theme-button-color: hsl(25 55% 50%);
+    --tg-theme-button-text-color: hsl(40 30% 98%);
+  }
+
+  .dark {
+    --background: 25 20% 10%;
+    --foreground: 35 30% 94%;
+
+    --card: 25 18% 14%;
+    --card-foreground: 35 30% 94%;
+
+    --popover: 25 18% 14%;
+    --popover-foreground: 35 30% 94%;
+
+    --primary: 25 50% 55%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 25 25% 22%;
+
+    --secondary: 40 20% 28%;
+    --secondary-foreground: 35 30% 94%;
+
+    --muted: 25 15% 20%;
+    --muted-foreground: 30 15% 55%;
+
+    --accent: 30 35% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 55% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 25 15% 22%;
+    --input: 25 15% 22%;
+    --ring: 25 50% 55%;
+
+    --sidebar-background: 25 20% 12%;
+    --sidebar-foreground: 35 30% 92%;
+    --sidebar-primary: 25 50% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 25 15% 18%;
+    --sidebar-accent-foreground: 35 30% 92%;
+    --sidebar-border: 25 15% 18%;
+    --sidebar-ring: 25 50% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+  }
+
+  .font-body {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .gradient-card {
+    background: var(--gradient-card);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .shadow-button {
+    box-shadow: var(--shadow-button);
+  }
+
+  /* Telegram WebApp safe area */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  /* Smooth animations */
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.4s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out forwards;
+  }
+
+  .animate-heart {
+    animation: heartBeat 0.4s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes heartBeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.2);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  75% {
+    transform: scale(1.1);
+  }
+}
+
+/* Skeleton loading */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--muted-foreground) / 0.1) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
