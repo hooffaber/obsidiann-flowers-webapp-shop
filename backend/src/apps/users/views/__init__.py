@@ -160,3 +160,24 @@ class TokenRefreshView(APIView):
                 {'error': 'invalid_token', 'detail': str(e)},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+
+
+class AcceptTermsView(APIView):
+    """
+    Принятие пользовательского соглашения.
+
+    POST /api/v1/users/accept-terms/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from django.utils import timezone
+
+        user = request.user
+        if not user.terms_accepted:
+            user.terms_accepted = True
+            user.terms_accepted_at = timezone.now()
+            user.save(update_fields=['terms_accepted', 'terms_accepted_at'])
+            logger.info(f"User {user.id} accepted terms")
+
+        return Response({'status': 'ok'})

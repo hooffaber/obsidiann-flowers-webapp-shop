@@ -155,20 +155,21 @@ class OrderCreateSerializer(serializers.Serializer):
         """Создаём заказ с позициями."""
         user = self.context['request'].user
         items_data = validated_data.pop('items')
-        
+
         # Получаем товары
         product_ids = [item['product_id'] for item in items_data]
         products = {p.id: p for p in Product.objects.filter(id__in=product_ids)}
-        
+
         # Создаём заказ
         order = Order.objects.create(user=user, **validated_data)
-        
+
         # Создаём позиции со snapshot
+        order_items = []
         for item_data in items_data:
             product = products[item_data['product_id']]
             main_image = product.images.filter(is_main=True).first() or product.images.first()
-            
-            OrderItem.objects.create(
+
+            order_item = OrderItem.objects.create(
                 order=order,
                 product=product,
                 qty=item_data['qty'],
@@ -177,14 +178,59 @@ class OrderCreateSerializer(serializers.Serializer):
                 line_total=product.price * item_data['qty'],
                 image_url=main_image.image.url if main_image else '',
             )
-            
+            order_items.append(order_item)
+
             # Уменьшаем остаток
             if not product.is_unlimited:
                 product.qty_available -= item_data['qty']
                 product.save(update_fields=['qty_available'])
-        
+
         # Пересчитываем итоги
         order.calculate_totals()
         order.save()
-        
+
+        # Отправляем уведомление в Telegram
+        self._send_order_notification(user, order, order_items)
+
         return order
+
+    def _send_order_notification(self, user, order, order_items):
+        """Отправить уведомление о заказе в Telegram."""
+        if not user.telegram_id:
+            return
+
+        from apps.bot.tasks import send_order_notification_task
+
+        # Формируем данные о позициях
+        items = [
+            {
+                'title': item.product_title,
+                'qty': item.qty,
+                'line_total': item.line_total,
+            }
+            for item in order_items
+        ]
+
+        # Формируем дату/время доставки
+        delivery_date = None
+        delivery_time = None
+
+        if order.delivery_date:
+            delivery_date = order.delivery_date.strftime('%d.%m.%Y')
+
+        if order.delivery_time_from and order.delivery_time_to:
+            delivery_time = f"{order.delivery_time_from.strftime('%H:%M')}-{order.delivery_time_to.strftime('%H:%M')}"
+        elif order.delivery_time_from:
+            delivery_time = f"с {order.delivery_time_from.strftime('%H:%M')}"
+
+        # Запускаем задачу
+        send_order_notification_task.delay(
+            telegram_id=user.telegram_id,
+            order_id=order.id,
+            items=items,
+            total=order.total,
+            delivery_fee=order.delivery_fee,
+            delivery_address=order.delivery_address,
+            delivery_date=delivery_date,
+            delivery_time=delivery_time,
+        )

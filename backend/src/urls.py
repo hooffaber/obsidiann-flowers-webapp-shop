@@ -27,6 +27,9 @@ urlpatterns = [
     # Health check
     path('health/', include('health_check.urls')),
 
+    # Telegram Bot webhook
+    path('api/bot/', include('apps.bot.urls')),
+
     # API Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
