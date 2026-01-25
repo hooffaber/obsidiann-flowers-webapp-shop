@@ -51,6 +51,7 @@ main = [
     "django-storages==1.14.6",
     "boto3==1.36.0",
     "pillow==11.1.0",
+    "whitenoise==6.8.2",
 
     # Monitoring
     "sentry-sdk[django,celery]==2.20.0",
