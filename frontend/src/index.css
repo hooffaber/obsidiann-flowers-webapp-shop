@@ -47,113 +47,113 @@ body {
 
 @layer base {
   :root {
-    /* Dark Warm Palette - глубокий тёмный с тёплыми акцентами */
-    --background: 20 15% 4%; /* Почти чёрный с тёплым оттенком */
-    --foreground: 35 20% 92%; /* Светло-бежевый текст */
+    /* Dark Monochrome Palette - глубокий тёмный с серыми акцентами */
+    --background: 0 0% 4%; /* Почти чёрный */
+    --foreground: 0 0% 92%; /* Светло-серый текст */
 
-    --card: 20 12% 7%; /* Тёмные карточки */
-    --card-foreground: 35 20% 92%;
+    --card: 0 0% 7%; /* Тёмные карточки */
+    --card-foreground: 0 0% 92%;
 
-    --popover: 20 12% 8%;
-    --popover-foreground: 35 20% 92%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 92%;
 
-    /* Тёплый терракотовый primary */
-    --primary: 25 60% 55%; /* Яркий терракотовый */
-    --primary-foreground: 0 0% 100%;
-    --primary-soft: 25 30% 12%;
+    /* Светло-серый primary */
+    --primary: 0 0% 85%; /* Яркий светло-серый */
+    --primary-foreground: 0 0% 10%; /* Тёмный текст на светлом фоне */
+    --primary-soft: 0 0% 12%;
 
     /* Приглушённый secondary */
-    --secondary: 30 20% 14%;
-    --secondary-foreground: 35 20% 90%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 90%;
 
     /* Тёмный muted */
-    --muted: 20 10% 10%;
-    --muted-foreground: 30 12% 45%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 45%;
 
-    /* Тёплый коричневый accent */
-    --accent: 30 45% 45%;
+    /* Серый accent */
+    --accent: 0 0% 45%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 60% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 25 10% 12%;
-    --input: 25 10% 12%;
-    --ring: 25 60% 55%;
+    --border: 0 0% 12%;
+    --input: 0 0% 12%;
+    --ring: 0 0% 85%;
 
     --radius: 0.75rem;
 
-    /* Custom gradients - глубокие тёмные версии */
-    --gradient-hero: linear-gradient(135deg, hsl(20 15% 5%) 0%, hsl(25 12% 7%) 50%, hsl(20 15% 5%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(20 12% 8%) 0%, hsl(20 12% 6%) 100%);
-    --gradient-badge-new: linear-gradient(135deg, hsl(30 40% 35%) 0%, hsl(35 35% 40%) 100%);
-    --gradient-badge-hit: linear-gradient(135deg, hsl(25 60% 50%) 0%, hsl(20 55% 55%) 100%);
+    /* Custom gradients - серые версии */
+    --gradient-hero: linear-gradient(135deg, hsl(0 0% 5%) 0%, hsl(0 0% 7%) 50%, hsl(0 0% 5%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 8%) 0%, hsl(0 0% 6%) 100%);
+    --gradient-badge-new: linear-gradient(135deg, hsl(0 0% 35%) 0%, hsl(0 0% 40%) 100%);
+    --gradient-badge-hit: linear-gradient(135deg, hsl(0 0% 50%) 0%, hsl(0 0% 55%) 100%);
 
     /* Shadows - более мягкие для тёмной темы */
     --shadow-sm: 0 2px 8px -2px hsl(0 0% 0% / 0.4);
     --shadow-md: 0 8px 24px -8px hsl(0 0% 0% / 0.5);
     --shadow-lg: 0 16px 48px -12px hsl(0 0% 0% / 0.6);
     --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.5);
-    --shadow-button: 0 4px 16px -2px hsl(25 60% 40% / 0.4);
+    --shadow-button: 0 4px 16px -2px hsl(0 0% 40% / 0.4);
 
     /* Sidebar */
-    --sidebar-background: 20 15% 5%;
-    --sidebar-foreground: 35 20% 90%;
-    --sidebar-primary: 25 60% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 25 15% 10%;
-    --sidebar-accent-foreground: 35 20% 90%;
-    --sidebar-border: 25 10% 12%;
-    --sidebar-ring: 25 60% 55%;
+    --sidebar-background: 0 0% 5%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 0 0% 85%;
+    --sidebar-primary-foreground: 0 0% 10%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 0 0% 12%;
+    --sidebar-ring: 0 0% 85%;
 
     /* Telegram WebApp theme */
-    --tg-theme-bg-color: hsl(20 15% 4%);
-    --tg-theme-text-color: hsl(35 20% 92%);
-    --tg-theme-hint-color: hsl(30 12% 45%);
-    --tg-theme-link-color: hsl(25 60% 55%);
-    --tg-theme-button-color: hsl(25 60% 55%);
-    --tg-theme-button-text-color: hsl(0 0% 100%);
+    --tg-theme-bg-color: hsl(0 0% 4%);
+    --tg-theme-text-color: hsl(0 0% 92%);
+    --tg-theme-hint-color: hsl(0 0% 45%);
+    --tg-theme-link-color: hsl(0 0% 85%);
+    --tg-theme-button-color: hsl(0 0% 85%);
+    --tg-theme-button-text-color: hsl(0 0% 10%);
   }
 
   /* Светлая тема (если понадобится) */
   .light {
-    --background: 30 30% 94%;
+    --background: 0 0% 94%;
     --foreground: 0 0% 0%;
 
-    --card: 40 30% 99%;
+    --card: 0 0% 99%;
     --card-foreground: 0 0% 0%;
 
-    --popover: 40 30% 99%;
+    --popover: 0 0% 99%;
     --popover-foreground: 0 0% 0%;
 
-    --primary: 25 55% 50%;
-    --primary-foreground: 40 30% 98%;
-    --primary-soft: 30 40% 92%;
+    --primary: 0 0% 15%;
+    --primary-foreground: 0 0% 98%;
+    --primary-soft: 0 0% 92%;
 
-    --secondary: 45 25% 35%;
-    --secondary-foreground: 40 30% 98%;
+    --secondary: 0 0% 35%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 35 30% 92%;
-    --muted-foreground: 25 20% 45%;
+    --muted: 0 0% 92%;
+    --muted-foreground: 0 0% 45%;
 
-    --accent: 30 40% 40%;
-    --accent-foreground: 40 30% 98%;
+    --accent: 0 0% 40%;
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 65% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 35 25% 85%;
-    --input: 35 25% 88%;
-    --ring: 25 55% 50%;
+    --border: 0 0% 85%;
+    --input: 0 0% 88%;
+    --ring: 0 0% 15%;
 
-    --sidebar-background: 35 30% 97%;
-    --sidebar-foreground: 25 25% 25%;
-    --sidebar-primary: 25 30% 15%;
-    --sidebar-primary-foreground: 35 30% 97%;
-    --sidebar-accent: 35 30% 93%;
-    --sidebar-accent-foreground: 25 30% 15%;
-    --sidebar-border: 35 25% 88%;
-    --sidebar-ring: 25 55% 50%;
+    --sidebar-background: 0 0% 97%;
+    --sidebar-foreground: 0 0% 25%;
+    --sidebar-primary: 0 0% 15%;
+    --sidebar-primary-foreground: 0 0% 97%;
+    --sidebar-accent: 0 0% 93%;
+    --sidebar-accent-foreground: 0 0% 15%;
+    --sidebar-border: 0 0% 88%;
+    --sidebar-ring: 0 0% 15%;
   }
 }
 
