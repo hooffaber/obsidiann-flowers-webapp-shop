@@ -1,12 +1,18 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.contrib.auth.decorators import user_passes_test
 from django.urls import include, path
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
+
+
+# Декоратор для проверки прав администратора
+def is_staff_user(user):
+    return user.is_authenticated and user.is_staff
 
 urlpatterns = [
     # Admin
@@ -30,10 +36,10 @@ urlpatterns = [
     # Telegram Bot webhook
     path('api/bot/', include('apps.bot.urls')),
 
-    # API Documentation
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    # API Documentation (только для администраторов)
+    path('api/schema/', user_passes_test(is_staff_user)(SpectacularAPIView.as_view()), name='schema'),
+    path('api/docs/', user_passes_test(is_staff_user)(SpectacularSwaggerView.as_view(url_name='schema')), name='swagger-ui'),
+    path('api/redoc/', user_passes_test(is_staff_user)(SpectacularRedocView.as_view(url_name='schema')), name='redoc'),
 ]
 
 # Serve media files in development
