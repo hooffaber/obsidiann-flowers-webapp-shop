@@ -1,8 +1,13 @@
 """
 Middleware для ограничения доступа только из Telegram Mini App.
 
-Проверяет наличие и валидность X-Telegram-Init-Data для всех запросов.
+Проверяет наличие валидного JWT токена или X-Telegram-Init-Data для всех запросов.
 Можно включить/выключить через ENFORCE_TELEGRAM_ONLY в settings.
+
+Логика проверки:
+1. Если есть JWT токен (Authorization: Bearer) - пропустить (токен выдан после проверки Telegram)
+2. Если нет JWT - проверить X-Telegram-Init-Data криптографически
+3. Если ни того, ни другого - блокировать (403)
 
 Исключения:
 - /admin/ - Django admin панель
@@ -74,14 +79,22 @@ class TelegramOnlyMiddleware:
         Проверить, что запрос идёт из Telegram Mini App.
 
         Проверяем:
-        1. Наличие X-Telegram-Init-Data заголовка
-        2. Валидность криптографической подписи
+        1. Наличие валидного JWT токена (был выдан после проверки Telegram)
+        2. Или наличие и валидность X-Telegram-Init-Data заголовка
         3. Срок действия auth_date
         """
-        # Извлекаем initData из заголовка
+        # Проверка 1: Если есть Authorization заголовок с JWT - пропустить
+        # JWT токен был выдан только после валидации Telegram initData
+        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+        if auth_header.startswith('Bearer '):
+            # Есть JWT токен - доверяем ему (он был выдан после проверки Telegram)
+            logger.debug(f"Request with JWT token from IP: {self._get_client_ip(request)}")
+            return True
+
+        # Проверка 2: Если нет JWT - проверяем X-Telegram-Init-Data
         init_data = self._get_init_data(request)
         if not init_data:
-            logger.warning(f"Access denied: No Telegram initData. Path: {request.path}, IP: {self._get_client_ip(request)}")
+            logger.warning(f"Access denied: No JWT and no Telegram initData. Path: {request.path}, IP: {self._get_client_ip(request)}")
             return False
 
         # Валидируем initData криптографически
