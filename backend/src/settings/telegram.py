@@ -9,3 +9,8 @@ TELEGRAM_MINI_APP_URL = env('TELEGRAM_MINI_APP_URL', default='')
 
 # Init data validation
 TELEGRAM_AUTH_TIMEOUT = env.int('TELEGRAM_AUTH_TIMEOUT', default=86400)  # 24 hours
+
+# Telegram-only access (block regular browsers)
+# Set to True to allow access only from Telegram Mini App
+# Set to False to allow access from any browser (useful for development)
+ENFORCE_TELEGRAM_ONLY = env.bool('ENFORCE_TELEGRAM_ONLY', default=False)
