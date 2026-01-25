@@ -399,7 +399,7 @@ API документация (`/api/docs/`, `/api/redoc/`) доступна **т
 make reset-db
 
 # Или вручную
-docker compose down -v
+docker compose down
 docker compose up -d postgres
 docker compose exec api python manage.py migrate
 ```
