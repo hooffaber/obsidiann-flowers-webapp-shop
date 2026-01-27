@@ -17,15 +17,23 @@ def _get_or_create_user(telegram_id: int, username: str | None, first_name: str 
             'username': f'tg_{telegram_id}',
             'telegram_username': (username or '').lower(),
             'first_name': first_name or '',
+            'is_active': True,
         }
     )
 
-    # Update username if changed
-    if not created and username:
-        username_lower = username.lower()
-        if user.telegram_username != username_lower:
-            user.telegram_username = username_lower
-            user.save(update_fields=['telegram_username'])
+    # Update username / reactivate if needed
+    if not created:
+        update_fields = []
+        if username:
+            username_lower = username.lower()
+            if user.telegram_username != username_lower:
+                user.telegram_username = username_lower
+                update_fields.append('telegram_username')
+        if not user.is_active:
+            user.is_active = True
+            update_fields.append('is_active')
+        if update_fields:
+            user.save(update_fields=update_fields)
 
     return user
 

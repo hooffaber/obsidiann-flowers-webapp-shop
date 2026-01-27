@@ -91,13 +91,14 @@ class TelegramAuthView(APIView):
 
         telegram_user = validated.user
 
-        # Создаём или обновляем пользователя
+        # Создаём или обновляем пользователя (is_active=True реактивирует удалённых)
         user, created = User.objects.update_or_create(
             telegram_id=telegram_user.id,
             defaults={
                 'first_name': telegram_user.first_name,
                 'last_name': telegram_user.last_name,
                 'username': telegram_user.username or f'tg_{telegram_user.id}',
+                'is_active': True,
             },
         )
 

@@ -62,7 +62,7 @@ class TelegramAuthentication(authentication.BaseAuthentication):
             logger.warning(f"Telegram auth failed: {e}")
             raise exceptions.AuthenticationFailed(str(e))
 
-        # Get or create user
+        # Get or create user (reactivate if was deactivated)
         try:
             user, created = User.objects.get_or_create(
                 telegram_id=validated.user.id,
@@ -70,6 +70,7 @@ class TelegramAuthentication(authentication.BaseAuthentication):
                     'first_name': validated.user.first_name,
                     'last_name': validated.user.last_name,
                     'username': validated.user.username or f'tg_{validated.user.id}',
+                    'is_active': True,
                 },
             )
         except Exception as e:
@@ -78,6 +79,10 @@ class TelegramAuthentication(authentication.BaseAuthentication):
 
         if created:
             logger.info(f"New user created via Telegram header auth: {validated.user.id}")
+        elif not user.is_active:
+            user.is_active = True
+            user.save(update_fields=['is_active'])
+            logger.info(f"Reactivated user via Telegram header auth: {validated.user.id}")
 
         # Return user and auth info
         return (user, {
