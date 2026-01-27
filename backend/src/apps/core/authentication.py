@@ -69,7 +69,8 @@ class TelegramAuthentication(authentication.BaseAuthentication):
                 defaults={
                     'first_name': validated.user.first_name,
                     'last_name': validated.user.last_name,
-                    'username': validated.user.username or f'tg_{validated.user.id}',
+                    'username': f'tg_{validated.user.id}',
+                    'telegram_username': (validated.user.username or '').lower(),
                     'is_active': True,
                 },
             )
@@ -79,10 +80,18 @@ class TelegramAuthentication(authentication.BaseAuthentication):
 
         if created:
             logger.info(f"New user created via Telegram header auth: {validated.user.id}")
-        elif not user.is_active:
-            user.is_active = True
-            user.save(update_fields=['is_active'])
-            logger.info(f"Reactivated user via Telegram header auth: {validated.user.id}")
+        else:
+            # Обновляем telegram_username и реактивируем если нужно
+            update_fields = []
+            tg_username = (validated.user.username or '').lower()
+            if user.telegram_username != tg_username:
+                user.telegram_username = tg_username
+                update_fields.append('telegram_username')
+            if not user.is_active:
+                user.is_active = True
+                update_fields.append('is_active')
+            if update_fields:
+                user.save(update_fields=update_fields)
 
         # Return user and auth info
         return (user, {

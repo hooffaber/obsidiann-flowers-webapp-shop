@@ -33,7 +33,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
         'is_staff',
         ('date_joined', RangeDateFilter),
     ]
-    search_fields = ['username', 'first_name', 'last_name', 'telegram_id']
+    search_fields = ['username', 'telegram_username', 'first_name', 'last_name', 'telegram_id']
     ordering = ['-date_joined']
     list_per_page = 25
 
@@ -43,7 +43,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
             'classes': ['tab'],
         }),
         ('Telegram', {
-            'fields': ('telegram_id',),
+            'fields': ('telegram_id', 'telegram_username'),
             'classes': ['tab'],
         }),
         ('Личные данные', {
@@ -87,14 +87,14 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
 
     @display(description='Telegram')
     def show_telegram(self, obj):
-        # Показываем username как ссылку на Telegram
-        if obj.username and not obj.username.startswith('telegram_user_'):
+        # Показываем telegram_username как ссылку на Telegram
+        if obj.telegram_username:
             return format_html(
                 '<a href="https://t.me/{}" target="_blank" style="color: #0369a1; text-decoration: none;">'
                 '@{}</a>',
-                obj.username, obj.username
+                obj.telegram_username, obj.telegram_username
             )
-        # Если username нет — показываем ID (для технических целей)
+        # Если username нет — показываем ID
         if obj.telegram_id:
             return format_html(
                 '<span style="font-family: monospace; color: #6b7280;">ID: {}</span>',
