@@ -17,7 +17,7 @@ import type {
   Product,
   ProductsFilter,
 } from '@/types/shop';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuthStore, initAuth } from '@/stores/authStore';
 import { getTelegramInitData, isTelegramWebApp } from '@/lib/telegram';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api/v1';
@@ -68,12 +68,20 @@ async function request<T>(
     headers,
   });
 
-  // Handle 401 - try to refresh token
-  if (response.status === 401 && retry && accessToken) {
-    const refreshed = await useAuthStore.getState().refreshToken();
-    if (refreshed) {
-      // Retry the request with new token
-      return request<T>(endpoint, options, false);
+  // Handle 401 - try to refresh token or re-authenticate
+  if (response.status === 401 && retry) {
+    if (accessToken) {
+      // Has JWT - try to refresh it
+      const refreshed = await useAuthStore.getState().refreshToken();
+      if (refreshed) {
+        return request<T>(endpoint, options, false);
+      }
+    } else if (isTelegramWebApp()) {
+      // No JWT - try to re-init auth with fresh Telegram initData
+      await initAuth();
+      if (useAuthStore.getState().getAccessToken()) {
+        return request<T>(endpoint, options, false);
+      }
     }
   }
 

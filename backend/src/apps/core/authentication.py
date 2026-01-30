@@ -46,10 +46,12 @@ class TelegramAuthentication(authentication.BaseAuthentication):
 
         Returns:
             Tuple of (user, auth_info) if authentication succeeds
-            None if this authenticator doesn't apply (no initData header)
+            None if this authenticator doesn't apply (no initData header or invalid initData)
 
-        Raises:
-            AuthenticationFailed if initData is invalid
+        Note:
+            Invalid initData returns None instead of raising AuthenticationFailed.
+            This allows AllowAny endpoints to work without authentication while
+            IsAuthenticated endpoints will still return 401 via permission check.
         """
         init_data = self._get_init_data(request)
         if not init_data:
@@ -60,7 +62,7 @@ class TelegramAuthentication(authentication.BaseAuthentication):
             validated = validate_init_data(init_data)
         except TelegramAuthError as e:
             logger.warning(f"Telegram auth failed: {e}")
-            raise exceptions.AuthenticationFailed(str(e))
+            return None  # Не бросаем исключение, даём permission class решить
 
         # Get or create user (reactivate if was deactivated)
         try:
