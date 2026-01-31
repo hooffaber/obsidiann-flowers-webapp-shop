@@ -100,6 +100,65 @@ def send_order_notification(
         return False
 
 
+STATUS_EMOJI = {
+    'confirmed': '✅',
+    'in_progress': '👨‍🍳',
+    'delivering': '🚚',
+    'done': '🎉',
+    'cancelled': '❌',
+}
+
+
+def send_order_status_notification(
+    telegram_id: int,
+    order_id: int,
+    new_status: str,
+    status_display: str,
+) -> bool:
+    """
+    Send order status change notification to user.
+
+    Args:
+        telegram_id: User's Telegram ID
+        order_id: Order number
+        new_status: New status code (e.g. 'confirmed')
+        status_display: Human-readable status (e.g. 'Подтверждён')
+
+    Returns:
+        True if sent successfully, False otherwise
+    """
+    bot_token = settings.TELEGRAM_BOT_TOKEN
+    if not bot_token:
+        logger.error("TELEGRAM_BOT_TOKEN not configured")
+        return False
+
+    emoji = STATUS_EMOJI.get(new_status, '📦')
+    message = f"📦 Заказ #{order_id}\n\nСтатус изменён: {status_display} {emoji}"
+
+    try:
+        response = requests.post(
+            f"https://api.telegram.org/bot{bot_token}/sendMessage",
+            json={
+                "chat_id": telegram_id,
+                "text": message,
+            },
+            timeout=30,
+        )
+
+        if response.status_code == 200:
+            logger.info(f"Status notification sent for order #{order_id} to {telegram_id}")
+            return True
+
+        logger.error(
+            f"Failed to send status notification: {response.status_code} - {response.text}"
+        )
+        return False
+
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to send status notification: {e}")
+        return False
+
+
 def send_admin_order_notification(
     order_id: int,
     items: list[dict],

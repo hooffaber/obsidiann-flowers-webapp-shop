@@ -4,7 +4,11 @@ Celery tasks for order notifications.
 import logging
 from celery import shared_task
 
-from apps.bot.services.notifications import send_order_notification, send_admin_order_notification
+from apps.bot.services.notifications import (
+    send_order_notification,
+    send_admin_order_notification,
+    send_order_status_notification,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -80,4 +84,33 @@ def send_admin_order_notification_task(
     )
 
     logger.info("Admin order notification task completed: order=%s admins_notified=%s", order_id, result)
+    return result
+
+
+@shared_task(
+    name='bot.send_order_status_notification',
+    max_retries=3,
+    default_retry_delay=30,
+)
+def send_order_status_notification_task(
+    telegram_id: int,
+    order_id: int,
+    new_status: str,
+    status_display: str,
+) -> bool:
+    """
+    Celery task to send order status change notification.
+    """
+    result = send_order_status_notification(
+        telegram_id=telegram_id,
+        order_id=order_id,
+        new_status=new_status,
+        status_display=status_display,
+    )
+
+    if result:
+        logger.info("Status notification sent: order=%s status=%s tg_id=%s", order_id, new_status, telegram_id)
+    else:
+        logger.warning("Status notification failed: order=%s status=%s tg_id=%s", order_id, new_status, telegram_id)
+
     return result
