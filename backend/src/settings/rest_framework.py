@@ -1,6 +1,6 @@
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'apps.core.authentication.DebugJWTAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
         'apps.core.authentication.TelegramAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
