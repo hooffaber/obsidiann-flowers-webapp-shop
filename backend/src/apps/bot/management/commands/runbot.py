@@ -9,10 +9,10 @@ import logging
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from telegram.ext import Application, CommandHandler
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
 
 from apps.bot.handlers.start import start_command
-from apps.bot.handlers.broadcast import get_broadcast_handler
+from apps.bot.handlers.broadcast import handle_broadcast_command, handle_message
 
 
 logger = logging.getLogger(__name__)
@@ -44,7 +44,12 @@ class Command(BaseCommand):
 
         # Add handlers
         application.add_handler(CommandHandler('start', start_command))
-        application.add_handler(get_broadcast_handler())
+        application.add_handler(CommandHandler('broadcast', handle_broadcast_command))
+        # Message handler for conversation flow (must be last)
+        application.add_handler(MessageHandler(
+            filters.TEXT | filters.PHOTO | filters.VIDEO | filters.Document.ALL | filters.VOICE,
+            handle_message,
+        ))
 
         self.stdout.write(self.style.SUCCESS('Bot started successfully!'))
         self.stdout.write('Press Ctrl+C to stop.')

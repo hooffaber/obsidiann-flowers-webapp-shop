@@ -1,6 +1,8 @@
 """
 Start command handler.
 """
+import logging
+
 from asgiref.sync import sync_to_async
 from django.conf import settings
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
@@ -8,9 +10,11 @@ from telegram.ext import ContextTypes
 
 from apps.users.models import User
 
+logger = logging.getLogger(__name__)
+
 
 @sync_to_async
-def _get_or_create_user(telegram_id: int, username: str | None, first_name: str | None) -> User:
+def _get_or_create_user(telegram_id: int, username: str | None, first_name: str | None) -> tuple[User, bool]:
     """Get or create user by telegram_id and update username."""
     user, created = User.objects.get_or_create(
         telegram_id=telegram_id,
@@ -36,7 +40,7 @@ def _get_or_create_user(telegram_id: int, username: str | None, first_name: str 
         if update_fields:
             user.save(update_fields=update_fields)
 
-    return user
+    return user, created
 
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -44,11 +48,16 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     tg_user = update.effective_user
 
     # Save/update user in database
-    await _get_or_create_user(
+    user, created = await _get_or_create_user(
         telegram_id=tg_user.id,
         username=tg_user.username,
         first_name=tg_user.first_name,
     )
+
+    if created:
+        logger.info("New user from /start: tg_id=%s username=%s", tg_user.id, tg_user.username)
+    else:
+        logger.debug("Existing user /start: tg_id=%s", tg_user.id)
 
     webapp_url = getattr(settings, 'TELEGRAM_MINI_APP_URL', '')
 

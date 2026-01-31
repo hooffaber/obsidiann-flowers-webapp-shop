@@ -3,6 +3,7 @@ Broadcast handler for admin mass messaging.
 
 Uses database for conversation state (webhook-compatible).
 """
+import logging
 import re
 from datetime import timedelta
 
@@ -11,7 +12,9 @@ from django.db.models import Count, Q
 from django.utils import timezone
 
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
-from telegram.ext import ContextTypes
+from telegram.ext import CommandHandler, ContextTypes, MessageHandler, filters
+
+logger = logging.getLogger(__name__)
 
 from apps.bot.models import (
     Broadcast,
@@ -212,8 +215,11 @@ async def handle_broadcast_command(update: Update, context: ContextTypes.DEFAULT
     )
 
     if not admin:
+        logger.warning("Broadcast access denied: tg_id=%s username=%s", user.id, user.username)
         await update.message.reply_text("⛔ У вас нет прав для создания рассылок.")
         return
+
+    logger.info("Broadcast started by admin: tg_id=%s username=%s", user.id, user.username)
 
     # Set state
     await ConversationState.aset_state(user.id, STATE_CHOOSE_AUDIENCE, {})
@@ -555,6 +561,7 @@ async def _handle_confirm(update: Update, user_id: int, data: dict) -> None:
     text = update.message.text
 
     if text == '❌ Отмена':
+        logger.info("Broadcast cancelled by admin: tg_id=%s", user_id)
         await ConversationState.aclear(user_id)
         await update.message.reply_text(
             "Рассылка отменена.",
@@ -586,7 +593,16 @@ async def _handle_confirm(update: Update, user_id: int, data: dict) -> None:
     from apps.bot.tasks import send_broadcast_task
     send_broadcast_task.delay(broadcast.id)
 
-    recipients_count = len(recipients_usernames)
+    recipients_count = len(data.get('recipients', []))
+
+    logger.info(
+        "Broadcast launched: id=%s admin_tg_id=%s audience=%s recipients=%d type=%s",
+        broadcast.id,
+        user_id,
+        audience_type,
+        recipients_count,
+        data['content_type'],
+    )
 
     # Clear state
     await ConversationState.aclear(user_id)
@@ -598,3 +614,52 @@ async def _handle_confirm(update: Update, user_id: int, data: dict) -> None:
         parse_mode='Markdown',
         reply_markup=ReplyKeyboardRemove(),
     )
+
+
+def get_broadcast_handler():
+    """
+    Get handlers for broadcast functionality (for polling mode).
+
+    Returns a list of handlers to be added to the application.
+    """
+    from telegram.ext import BaseHandler
+
+    class BroadcastHandler(BaseHandler):
+        """Combined handler for broadcast command and messages."""
+
+        def __init__(self):
+            super().__init__(self._callback)
+
+        def check_update(self, update: Update) -> bool:
+            """Check if this update should be handled."""
+            if not update.message:
+                return False
+
+            # Handle /broadcast command
+            if update.message.text and update.message.text.startswith('/broadcast'):
+                return True
+
+            # Handle messages from users in broadcast conversation
+            if update.effective_user:
+                # Check if user has active broadcast state
+                from apps.bot.models import ConversationState
+                state = ConversationState.objects.filter(
+                    user_id=update.effective_user.id,
+                    state__startswith='broadcast_'
+                ).first()
+                return state is not None
+
+            return False
+
+        async def _callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+            """Handle the update."""
+            if update.message.text and update.message.text.startswith('/broadcast'):
+                await handle_broadcast_command(update, context)
+            else:
+                await handle_message(update, context)
+
+        async def handle_update(self, update, application, check_result, context):
+            """Handle the update."""
+            await self._callback(update, context)
+
+    return BroadcastHandler()
