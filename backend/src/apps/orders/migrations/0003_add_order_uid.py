@@ -30,12 +30,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # Step 1: Add uid field as nullable
+        # Step 1: Add uid field as nullable (no index yet)
         migrations.AddField(
             model_name='order',
             name='uid',
             field=models.CharField(
-                db_index=True,
                 max_length=10,
                 null=True,
                 blank=True,
@@ -44,7 +43,7 @@ class Migration(migrations.Migration):
         ),
         # Step 2: Fill existing orders with unique UIDs
         migrations.RunPython(fill_existing_uids, reverse_fill),
-        # Step 3: Make uid non-nullable and unique
+        # Step 3: Make uid non-nullable, unique, and indexed
         migrations.AlterField(
             model_name='order',
             name='uid',
