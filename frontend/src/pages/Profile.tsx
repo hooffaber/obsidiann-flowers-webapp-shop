@@ -188,7 +188,7 @@ const Profile = () => {
 
         {/* App Version */}
         <div className="text-center mt-8 text-xs text-muted-foreground">
-          Bloom v1.0.0
+          Obsidiann v1.0.0
         </div>
       </main>
 

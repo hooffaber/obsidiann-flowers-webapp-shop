@@ -73,7 +73,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
     await update.message.reply_text(
         f"Привет, {tg_user.first_name}! 👋\n\n"
-        f"Добро пожаловать в бот цветочного магазина Bloom 🌸\n\n"
+        f"Добро пожаловать в Obsidiann 🌸\n\n"
         f"Нажмите кнопку ниже, чтобы открыть магазин.",
         reply_markup=keyboard
     )

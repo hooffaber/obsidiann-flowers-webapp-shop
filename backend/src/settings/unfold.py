@@ -2,8 +2,8 @@ from django.templatetags.static import static
 from django.urls import reverse_lazy
 
 UNFOLD = {
-    'SITE_TITLE': 'Bloom Admin',
-    'SITE_HEADER': 'Bloom Admin',
+    'SITE_TITLE': 'Obsidiann Admin',
+    'SITE_HEADER': 'Obsidiann Admin',
     # 'SITE_SYMBOL': 'local_florist',  # Закомментировано - используем только текст
     'SHOW_HISTORY': True,
     'SHOW_VIEW_ON_SITE': True,

@@ -89,13 +89,13 @@ export function TermsAgreementDialog({ onAccept }: TermsAgreementDialogProps) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="sm:max-w-md mx-4 rounded-2xl"
+        className="sm:max-w-md max-w-[calc(100%-2rem)] rounded-2xl"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <DialogHeader className="text-center sm:text-center">
           <div className="mx-auto mb-4 text-5xl">🌸</div>
-          <DialogTitle className="text-xl">Добро пожаловать в Bloom!</DialogTitle>
+          <DialogTitle className="text-xl">Добро пожаловать в Obsidiann!</DialogTitle>
           <DialogDescription className="text-base pt-2">
             Для продолжения использования приложения необходимо принять условия
             пользовательского соглашения.

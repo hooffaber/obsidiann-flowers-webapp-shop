@@ -50,7 +50,7 @@ export function Header({ onSearch, showSearch = true, title }: HeaderProps) {
               </SheetClose>
               <div className="flex items-center gap-2">
                 <span className="text-2xl">🌸</span>
-                <span className="font-display text-lg font-semibold">Bloom</span>
+                <span className="font-display text-lg font-semibold">Obsidiann</span>
               </div>
             </div>
 
@@ -72,7 +72,7 @@ export function Header({ onSearch, showSearch = true, title }: HeaderProps) {
         <Link to="/" className="flex items-center gap-2">
           <span className="text-2xl">🌸</span>
           <span className="font-display text-xl font-semibold text-foreground">
-            {title || 'Bloom'}
+            {title || 'Obsidiann'}
           </span>
         </Link>
 
