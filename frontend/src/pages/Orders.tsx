@@ -189,7 +189,7 @@ export default function OrdersPage() {
                     {/* Top row: Order number + Status */}
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-sm font-medium text-foreground">
-                        Заказ #{order.id}
+                        Заказ #{order.uid}
                       </span>
                       <div className={cn(
                         "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",

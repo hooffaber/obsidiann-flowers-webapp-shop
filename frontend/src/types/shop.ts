@@ -72,6 +72,7 @@ export interface OrderItem {
 
 export interface Order {
   id: number;
+  uid: string;
   status: OrderStatus;
   status_display: string;
   payment_method: PaymentMethod;

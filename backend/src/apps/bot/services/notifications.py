@@ -16,7 +16,7 @@ def format_price(kopeks: int) -> str:
 
 def send_order_notification(
     telegram_id: int,
-    order_id: int,
+    order_uid: str,
     items: list[dict],
     total: int,
     delivery_fee: int,
@@ -29,7 +29,7 @@ def send_order_notification(
 
     Args:
         telegram_id: User's Telegram ID
-        order_id: Order number
+        order_uid: Order UID (6-digit code)
         items: List of dicts with 'title', 'qty', 'line_total'
         total: Total amount in kopeks
         delivery_fee: Delivery fee in kopeks
@@ -53,7 +53,7 @@ def send_order_notification(
 
     # Build message
     lines = [
-        f"🛍 Заказ #{order_id} оформлен!",
+        f"🛍 Заказ #{order_uid} оформлен!",
         "",
         "📦 Состав:",
         items_text,
@@ -87,7 +87,7 @@ def send_order_notification(
         )
 
         if response.status_code == 200:
-            logger.info(f"Order notification sent for order #{order_id} to {telegram_id}")
+            logger.info(f"Order notification sent for order #{order_uid} to {telegram_id}")
             return True
 
         logger.error(
@@ -111,18 +111,26 @@ STATUS_EMOJI = {
 
 def send_order_status_notification(
     telegram_id: int,
-    order_id: int,
+    order_uid: str,
     new_status: str,
     status_display: str,
+    customer_phone: str | None = None,
+    customer_username: str | None = None,
+    order_date: str | None = None,
+    items: list[dict] | None = None,
 ) -> bool:
     """
     Send order status change notification to user.
 
     Args:
         telegram_id: User's Telegram ID
-        order_id: Order number
+        order_uid: Order UID (6-digit code)
         new_status: New status code (e.g. 'confirmed')
         status_display: Human-readable status (e.g. 'Подтверждён')
+        customer_phone: Customer's phone number
+        customer_username: Customer's Telegram username (without @)
+        order_date: Order creation date (formatted)
+        items: List of dicts with 'title', 'qty', 'line_total'
 
     Returns:
         True if sent successfully, False otherwise
@@ -133,7 +141,32 @@ def send_order_status_notification(
         return False
 
     emoji = STATUS_EMOJI.get(new_status, '📦')
-    message = f"📦 Заказ #{order_id}\n\nСтатус изменён: {status_display} {emoji}"
+
+    # Build message
+    lines = [
+        f"📦 Заказ #{order_uid}",
+        "",
+        f"Статус изменён: {status_display} {emoji}",
+    ]
+
+    # Build recipient line: phone + username if available
+    if customer_phone and customer_username:
+        lines.append(f"📱 Получатель: {customer_phone} (@{customer_username})")
+    elif customer_phone:
+        lines.append(f"📱 Получатель: {customer_phone}")
+    elif customer_username:
+        lines.append(f"📱 Получатель: @{customer_username}")
+
+    if order_date:
+        lines.append(f"📅 Дата заказа: {order_date}")
+
+    if items:
+        lines.append("")
+        lines.append("🛒 Состав заказа:")
+        for item in items:
+            lines.append(f"• {item['title']} x{item['qty']} — {format_price(item['line_total'])}")
+
+    message = "\n".join(lines)
 
     try:
         response = requests.post(
@@ -146,7 +179,7 @@ def send_order_status_notification(
         )
 
         if response.status_code == 200:
-            logger.info(f"Status notification sent for order #{order_id} to {telegram_id}")
+            logger.info(f"Status notification sent for order #{order_uid} to {telegram_id}")
             return True
 
         logger.error(
@@ -160,7 +193,7 @@ def send_order_status_notification(
 
 
 def send_admin_order_notification(
-    order_id: int,
+    order_uid: str,
     items: list[dict],
     total: int,
     delivery_fee: int,
@@ -175,7 +208,7 @@ def send_admin_order_notification(
     Send order notification to all active admins.
 
     Args:
-        order_id: Order number
+        order_uid: Order UID (6-digit code)
         items: List of dicts with 'title', 'qty', 'line_total'
         total: Total amount in kopeks
         delivery_fee: Delivery fee in kopeks
@@ -218,7 +251,7 @@ def send_admin_order_notification(
 
     # Build message
     lines = [
-        f"🆕 Новый заказ #{order_id}",
+        f"🆕 Новый заказ #{order_uid}",
         "",
         f"👤 Клиент: {customer_name}",
         f"📱 {contact}",
@@ -258,7 +291,7 @@ def send_admin_order_notification(
 
             if response.status_code == 200:
                 sent_count += 1
-                logger.info(f"Admin notification sent for order #{order_id} to {admin.username}")
+                logger.info(f"Admin notification sent for order #{order_uid} to {admin.username}")
             else:
                 logger.error(
                     f"Failed to send admin notification to {admin.username}: "
@@ -267,5 +300,5 @@ def send_admin_order_notification(
         except requests.exceptions.RequestException as e:
             logger.error(f"Failed to send admin notification to {admin.username}: {e}")
 
-    logger.info(f"Admin notifications sent for order #{order_id}: {sent_count}/{admins.count()}")
+    logger.info(f"Admin notifications sent for order #{order_uid}: {sent_count}/{admins.count()}")
     return sent_count

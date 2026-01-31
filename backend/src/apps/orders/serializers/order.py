@@ -42,6 +42,7 @@ class OrderListSerializer(serializers.ModelSerializer):
         model = Order
         fields = [
             'id',
+            'uid',
             'status',
             'status_display',
             'payment_method',
@@ -71,6 +72,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
         model = Order
         fields = [
             'id',
+            'uid',
             'status',
             'status_display',
             'payment_method',
@@ -227,7 +229,7 @@ class OrderCreateSerializer(serializers.Serializer):
         if user.telegram_id:
             send_order_notification_task.delay(
                 telegram_id=user.telegram_id,
-                order_id=order.id,
+                order_uid=order.uid,
                 items=items,
                 total=order.total,
                 delivery_fee=order.delivery_fee,
@@ -248,7 +250,7 @@ class OrderCreateSerializer(serializers.Serializer):
 
         # Уведомление админам
         send_admin_order_notification_task.delay(
-            order_id=order.id,
+            order_uid=order.uid,
             items=items,
             total=order.total,
             delivery_fee=order.delivery_fee,

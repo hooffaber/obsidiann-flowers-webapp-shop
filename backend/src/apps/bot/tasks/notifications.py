@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 )
 def send_order_notification_task(
     telegram_id: int,
-    order_id: int,
+    order_uid: str,
     items: list[dict],
     total: int,
     delivery_fee: int,
@@ -33,7 +33,7 @@ def send_order_notification_task(
     """
     result = send_order_notification(
         telegram_id=telegram_id,
-        order_id=order_id,
+        order_uid=order_uid,
         items=items,
         total=total,
         delivery_fee=delivery_fee,
@@ -43,9 +43,9 @@ def send_order_notification_task(
     )
 
     if result:
-        logger.info("Order notification sent: order=%s tg_id=%s", order_id, telegram_id)
+        logger.info("Order notification sent: order=%s tg_id=%s", order_uid, telegram_id)
     else:
-        logger.warning("Order notification failed: order=%s tg_id=%s", order_id, telegram_id)
+        logger.warning("Order notification failed: order=%s tg_id=%s", order_uid, telegram_id)
 
     return result
 
@@ -56,7 +56,7 @@ def send_order_notification_task(
     default_retry_delay=30,
 )
 def send_admin_order_notification_task(
-    order_id: int,
+    order_uid: str,
     items: list[dict],
     total: int,
     delivery_fee: int,
@@ -71,7 +71,7 @@ def send_admin_order_notification_task(
     Celery task to send order notification to admins.
     """
     result = send_admin_order_notification(
-        order_id=order_id,
+        order_uid=order_uid,
         items=items,
         total=total,
         delivery_fee=delivery_fee,
@@ -83,7 +83,7 @@ def send_admin_order_notification_task(
         delivery_time=delivery_time,
     )
 
-    logger.info("Admin order notification task completed: order=%s admins_notified=%s", order_id, result)
+    logger.info("Admin order notification task completed: order=%s admins_notified=%s", order_uid, result)
     return result
 
 
@@ -92,25 +92,53 @@ def send_admin_order_notification_task(
     max_retries=3,
     default_retry_delay=30,
 )
-def send_order_status_notification_task(
-    telegram_id: int,
-    order_id: int,
-    new_status: str,
-    status_display: str,
-) -> bool:
+def send_order_status_notification_task(order_id: int) -> bool:
     """
     Celery task to send order status change notification.
     """
+    from apps.orders.models import Order
+
+    try:
+        order = Order.objects.select_related('user').prefetch_related('items').get(pk=order_id)
+    except Order.DoesNotExist:
+        logger.error("Order not found: order_id=%s", order_id)
+        return False
+
+    telegram_id = getattr(order.user, 'telegram_id', None)
+    if not telegram_id:
+        logger.warning("Cannot send status notification: user has no telegram_id, order=%s", order.uid)
+        return False
+
+    # Build items list
+    items = [
+        {
+            'title': item.product_title,
+            'qty': item.qty,
+            'line_total': item.line_total,
+        }
+        for item in order.items.all()
+    ]
+
+    # Format delivery date
+    order_date = order.created_at.strftime('%d.%m.%Y') if order.created_at else None
+
+    # Get telegram username if available
+    telegram_username = getattr(order.user, 'telegram_username', None) or None
+
     result = send_order_status_notification(
         telegram_id=telegram_id,
-        order_id=order_id,
-        new_status=new_status,
-        status_display=status_display,
+        order_uid=order.uid,
+        new_status=order.status,
+        status_display=order.get_status_display(),
+        customer_phone=order.customer_phone,
+        customer_username=telegram_username,
+        order_date=order_date,
+        items=items,
     )
 
     if result:
-        logger.info("Status notification sent: order=%s status=%s tg_id=%s", order_id, new_status, telegram_id)
+        logger.info("Status notification sent: order=%s status=%s tg_id=%s", order.uid, order.status, telegram_id)
     else:
-        logger.warning("Status notification failed: order=%s status=%s tg_id=%s", order_id, new_status, telegram_id)
+        logger.warning("Status notification failed: order=%s status=%s tg_id=%s", order.uid, order.status, telegram_id)
 
     return result

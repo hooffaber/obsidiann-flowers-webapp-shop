@@ -19,6 +19,7 @@ class OrderItemDTO:
 class OrderListDTO:
     """Заказ для списка."""
     id: int
+    uid: str
     status: str
     status_display: str
     total: int  # копейки
@@ -31,6 +32,7 @@ class OrderListDTO:
 class OrderDetailDTO:
     """Полная информация о заказе."""
     id: int
+    uid: str
     status: str
     status_display: str
 

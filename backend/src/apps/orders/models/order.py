@@ -1,8 +1,19 @@
 """Order models."""
+import random
+
 from django.conf import settings
 from django.db import models
 
 from apps.core.models import TimeStampedModel
+
+
+def generate_order_uid():
+    """Генерирует уникальный 6-значный UID."""
+    from apps.orders.models import Order
+    while True:
+        uid = str(random.randint(100000, 999999))
+        if not Order.objects.filter(uid=uid).exists():
+            return uid
 
 
 class OrderStatus(models.TextChoices):
@@ -32,6 +43,13 @@ class Order(TimeStampedModel):
     Позиции — в OrderItem.
     """
 
+    uid = models.CharField(
+        max_length=10,
+        unique=True,
+        default=generate_order_uid,
+        verbose_name='Номер заказа',
+        db_index=True,
+    )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -112,7 +130,7 @@ class Order(TimeStampedModel):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"Заказ #{self.pk} - {self.customer_name}"
+        return f"Заказ #{self.uid} - {self.customer_name}"
 
     @property
     def total_display(self) -> str:

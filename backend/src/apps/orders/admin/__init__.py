@@ -79,7 +79,7 @@ class OrderAdmin(ModelAdmin):
         StatusFilter,
         ('created_at', RangeDateFilter),
     ]
-    search_fields = ['id', 'customer_name', 'customer_phone', 'delivery_address']
+    search_fields = ['uid', 'customer_name', 'customer_phone', 'delivery_address']
     readonly_fields = [
         'user',
         'show_subtotal',
@@ -131,7 +131,7 @@ class OrderAdmin(ModelAdmin):
     def show_id(self, obj):
         return format_html(
             '<span style="font-family: monospace; font-weight: 600;">#{}</span>',
-            obj.id
+            obj.uid
         )
 
     @display(description='Статус')

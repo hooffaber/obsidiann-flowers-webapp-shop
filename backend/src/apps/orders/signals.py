@@ -41,31 +41,14 @@ def notify_status_change(sender, instance, created, **kwargs):
     if instance.status == OrderStatus.NEW:
         return
 
-    # Get user's telegram_id
-    telegram_id = getattr(instance.user, 'telegram_id', None)
-    if not telegram_id:
-        logger.warning(
-            "Cannot send status notification for order #%s: user has no telegram_id",
-            instance.pk
-        )
-        return
-
-    # Get status display name
-    status_display = instance.get_status_display()
-
     # Send notification via Celery
     from apps.bot.tasks import send_order_status_notification_task
 
-    send_order_status_notification_task.delay(
-        telegram_id=telegram_id,
-        order_id=instance.pk,
-        new_status=instance.status,
-        status_display=status_display,
-    )
+    send_order_status_notification_task.delay(order_id=instance.pk)
 
     logger.info(
         "Order status notification queued: order=#%s status=%s->%s",
-        instance.pk,
+        instance.uid,
         old_status,
         instance.status,
     )
