@@ -39,10 +39,12 @@ class DebugJWTAuthentication(BaseJWTAuthentication):
             logger.debug("[JWT] No token in header")
             return None
 
-        logger.info(f"[JWT] Token received: {raw_token[:20].decode()}...")
+        logger.info(f"[JWT] Token received: {raw_token[:50].decode()}...")
 
         try:
             validated_token = self.get_validated_token(raw_token)
+            user_id = validated_token.get('user_id')
+            logger.info(f"[JWT] Token valid, user_id={user_id} (type={type(user_id).__name__})")
             user = self.get_user(validated_token)
             logger.info(f"[JWT] Auth success: user_id={user.id}")
             return (user, validated_token)
