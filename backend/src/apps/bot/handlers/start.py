@@ -2,7 +2,8 @@
 Start command handler.
 """
 from asgiref.sync import sync_to_async
-from telegram import Update
+from django.conf import settings
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
 from telegram.ext import ContextTypes
 
 from apps.users.models import User
@@ -49,8 +50,21 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         first_name=tg_user.first_name,
     )
 
+    webapp_url = getattr(settings, 'TELEGRAM_MINI_APP_URL', '')
+
+    # Build keyboard with WebApp button
+    keyboard = None
+    if webapp_url:
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton(
+                text="🌸 Открыть магазин",
+                web_app=WebAppInfo(url=webapp_url)
+            )]
+        ])
+
     await update.message.reply_text(
         f"Привет, {tg_user.first_name}! 👋\n\n"
         f"Добро пожаловать в бот цветочного магазина Bloom 🌸\n\n"
-        f"Нажмите кнопку ниже, чтобы открыть магазин."
+        f"Нажмите кнопку ниже, чтобы открыть магазин.",
+        reply_markup=keyboard
     )

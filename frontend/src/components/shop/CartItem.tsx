@@ -86,14 +86,14 @@ export function CartItemComponent({ item, index = 0 }: CartItemProps) {
           </div>
 
           {/* Total & Remove */}
-          <div className="flex items-center gap-3">
-            <span className="font-semibold text-foreground whitespace-nowrap">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-foreground truncate">
               {formatPrice(item.product.price * item.quantity)}
             </span>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              className="h-8 w-8 flex-shrink-0 text-muted-foreground hover:text-destructive"
               onClick={handleRemove}
             >
               <Trash2 className="h-4 w-4" />
