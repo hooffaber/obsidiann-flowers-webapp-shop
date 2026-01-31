@@ -1,4 +1,6 @@
 """Favorite views."""
+import logging
+
 from django.db.models import Prefetch
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -12,6 +14,8 @@ from apps.products.serializers import (
     FavoriteToggleSerializer,
     ProductListSerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class FavoriteViewSet(viewsets.ViewSet):
@@ -55,6 +59,7 @@ class FavoriteViewSet(viewsets.ViewSet):
             )
 
         FavoriteAction.add_to_favorites(request.user, product)
+        logger.info("Favorite added: user=%s product=%s", request.user.id, product.id)
         return Response(
             {'detail': 'Добавлено в избранное', 'is_favorite': True},
             status=status.HTTP_201_CREATED
@@ -130,6 +135,12 @@ class FavoriteViewSet(viewsets.ViewSet):
             product = Product.objects.get(id=product_id)
             FavoriteAction.remove_from_favorites(request.user, product)
 
+        logger.info(
+            "Favorites synced: user=%s added=%d removed=%d",
+            request.user.id,
+            len(to_add),
+            len(to_remove),
+        )
         return Response({
             'detail': 'Избранное синхронизировано',
             'added': len(to_add),

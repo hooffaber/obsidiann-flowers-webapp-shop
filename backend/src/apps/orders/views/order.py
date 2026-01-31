@@ -1,4 +1,6 @@
 """Order views."""
+import logging
+
 from django.db.models import Count
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
@@ -10,6 +12,8 @@ from apps.orders.serializers import (
     OrderDetailSerializer,
     OrderListSerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -43,6 +47,14 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         order = serializer.save()
+
+        logger.info(
+            "Order created: id=%s user=%s total=%s items=%d",
+            order.id,
+            request.user.id,
+            order.total,
+            order.items.count(),
+        )
 
         # Возвращаем созданный заказ
         output_serializer = OrderDetailSerializer(order, context={'request': request})

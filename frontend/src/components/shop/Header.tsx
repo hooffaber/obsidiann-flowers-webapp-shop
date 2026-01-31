@@ -48,10 +48,7 @@ export function Header({ onSearch, showSearch = true, title }: HeaderProps) {
                   <X className="h-5 w-5" />
                 </Button>
               </SheetClose>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🌸</span>
-                <span className="font-display text-lg font-semibold">Obsidiann</span>
-              </div>
+              <span className="font-display text-lg font-semibold tracking-wide">OBSIDIANN</span>
             </div>
 
             {/* Navigation */}
@@ -69,10 +66,9 @@ export function Header({ onSearch, showSearch = true, title }: HeaderProps) {
         </Sheet>
 
         {/* Logo - center */}
-        <Link to="/" className="flex items-center gap-2">
-          <span className="text-2xl">🌸</span>
-          <span className="font-display text-xl font-semibold text-foreground">
-            {title || 'Obsidiann'}
+        <Link to="/" className="flex items-center">
+          <span className="font-display text-xl font-semibold text-foreground tracking-wide">
+            {title || 'OBSIDIANN'}
           </span>
         </Link>
 

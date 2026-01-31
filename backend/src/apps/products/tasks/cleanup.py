@@ -1,8 +1,11 @@
 """Cleanup tasks for products app."""
+import logging
 from datetime import timedelta
 
 from celery import shared_task
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task(
@@ -30,6 +33,8 @@ def cleanup_old_favorite_actions(self, days: int = 90) -> dict:
     deleted_count, _ = FavoriteAction.objects.filter(
         created_at__lt=cutoff_date
     ).delete()
+
+    logger.info("Favorites cleanup: deleted=%d cutoff=%s", deleted_count, cutoff_date.date())
 
     return {
         'deleted_count': deleted_count,

@@ -42,9 +42,10 @@ export function CartItemComponent({ item, index = 0 }: CartItemProps) {
       {/* Image */}
       <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
         <img
-          src={item.product.main_image || '/placeholder.jpg'}
+          src={item.product.main_image || '/placeholder.svg'}
           alt={item.product.title}
           className="w-full h-full object-cover"
+          onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
         />
       </div>
 

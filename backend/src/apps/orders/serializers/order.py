@@ -196,10 +196,7 @@ class OrderCreateSerializer(serializers.Serializer):
 
     def _send_order_notification(self, user, order, order_items):
         """Отправить уведомление о заказе в Telegram."""
-        if not user.telegram_id:
-            return
-
-        from apps.bot.tasks import send_order_notification_task
+        from apps.bot.tasks import send_order_notification_task, send_admin_order_notification_task
 
         # Формируем данные о позициях
         items = [
@@ -223,14 +220,29 @@ class OrderCreateSerializer(serializers.Serializer):
         elif order.delivery_time_from:
             delivery_time = f"с {order.delivery_time_from.strftime('%H:%M')}"
 
-        # Запускаем задачу
-        send_order_notification_task.delay(
-            telegram_id=user.telegram_id,
+        # Уведомление клиенту
+        if user.telegram_id:
+            send_order_notification_task.delay(
+                telegram_id=user.telegram_id,
+                order_id=order.id,
+                items=items,
+                total=order.total,
+                delivery_fee=order.delivery_fee,
+                delivery_address=order.delivery_address,
+                delivery_date=delivery_date,
+                delivery_time=delivery_time,
+            )
+
+        # Уведомление админам
+        send_admin_order_notification_task.delay(
             order_id=order.id,
             items=items,
             total=order.total,
             delivery_fee=order.delivery_fee,
             delivery_address=order.delivery_address,
+            customer_name=order.customer_name,
+            customer_username=user.telegram_username or None,
+            customer_phone=order.customer_phone,
             delivery_date=delivery_date,
             delivery_time=delivery_time,
         )

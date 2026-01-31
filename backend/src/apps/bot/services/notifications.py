@@ -98,3 +98,115 @@ def send_order_notification(
     except requests.exceptions.RequestException as e:
         logger.error(f"Failed to send order notification: {e}")
         return False
+
+
+def send_admin_order_notification(
+    order_id: int,
+    items: list[dict],
+    total: int,
+    delivery_fee: int,
+    delivery_address: str,
+    customer_name: str,
+    customer_username: str | None = None,
+    customer_phone: str | None = None,
+    delivery_date: str | None = None,
+    delivery_time: str | None = None,
+) -> int:
+    """
+    Send order notification to all active admins.
+
+    Args:
+        order_id: Order number
+        items: List of dicts with 'title', 'qty', 'line_total'
+        total: Total amount in kopeks
+        delivery_fee: Delivery fee in kopeks
+        delivery_address: Delivery address
+        customer_name: Customer name
+        customer_username: Customer's Telegram username (without @)
+        customer_phone: Customer's phone number
+        delivery_date: Optional delivery date string
+        delivery_time: Optional delivery time string
+
+    Returns:
+        Number of admins notified successfully
+    """
+    from apps.bot.models import BotAdmin
+
+    bot_token = settings.TELEGRAM_BOT_TOKEN
+    if not bot_token:
+        logger.error("TELEGRAM_BOT_TOKEN not configured")
+        return 0
+
+    # Get active admins with telegram_id
+    admins = BotAdmin.objects.filter(is_active=True, telegram_id__isnull=False)
+    if not admins.exists():
+        logger.info("No active admins with telegram_id to notify")
+        return 0
+
+    # Build items list
+    items_text = "\n".join(
+        f"• {item['title']} x{item['qty']} — {format_price(item['line_total'])}"
+        for item in items
+    )
+
+    # Customer contact: prefer username, fallback to phone
+    if customer_username:
+        contact = f"@{customer_username}"
+    elif customer_phone:
+        contact = customer_phone
+    else:
+        contact = "—"
+
+    # Build message
+    lines = [
+        f"🆕 Новый заказ #{order_id}",
+        "",
+        f"👤 Клиент: {customer_name}",
+        f"📱 {contact}",
+        "",
+        "📦 Состав:",
+        items_text,
+        "",
+        f"💰 Итого: {format_price(total)}",
+    ]
+
+    if delivery_fee > 0:
+        lines.append(f"🚚 Доставка: {format_price(delivery_fee)}")
+
+    lines.append(f"📍 {delivery_address}")
+
+    # Add delivery date/time if provided
+    if delivery_date:
+        date_line = f"📅 {delivery_date}"
+        if delivery_time:
+            date_line += f", {delivery_time}"
+        lines.append(date_line)
+
+    message = "\n".join(lines)
+
+    # Send to each admin
+    sent_count = 0
+    for admin in admins:
+        try:
+            response = requests.post(
+                f"https://api.telegram.org/bot{bot_token}/sendMessage",
+                json={
+                    "chat_id": admin.telegram_id,
+                    "text": message,
+                },
+                timeout=30,
+            )
+
+            if response.status_code == 200:
+                sent_count += 1
+                logger.info(f"Admin notification sent for order #{order_id} to {admin.username}")
+            else:
+                logger.error(
+                    f"Failed to send admin notification to {admin.username}: "
+                    f"{response.status_code} - {response.text}"
+                )
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to send admin notification to {admin.username}: {e}")
+
+    logger.info(f"Admin notifications sent for order #{order_id}: {sent_count}/{admins.count()}")
+    return sent_count

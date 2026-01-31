@@ -1,4 +1,6 @@
 """Product views."""
+import logging
+
 from django.db import models
 from django.db.models import Prefetch
 from django_filters import rest_framework as filters
@@ -7,6 +9,8 @@ from rest_framework.permissions import AllowAny
 
 from apps.products.models import Product, ProductImage
 from apps.products.serializers import ProductDetailSerializer, ProductListSerializer
+
+logger = logging.getLogger(__name__)
 
 
 class ProductFilter(filters.FilterSet):

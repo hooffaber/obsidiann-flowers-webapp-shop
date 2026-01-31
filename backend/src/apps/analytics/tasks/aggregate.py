@@ -1,9 +1,12 @@
 """Tasks for aggregating analytics data."""
+import logging
 from datetime import timedelta
 
 from celery import shared_task
 from django.db.models import Count, Sum
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task(
@@ -92,6 +95,15 @@ def aggregate_daily_stats(self, date_str: str | None = None) -> dict:
         }
     )
 
+    logger.info(
+        "Daily stats aggregated: date=%s new_users=%d active=%d orders=%d revenue=%d",
+        target_date,
+        new_users,
+        active_users,
+        orders_data['orders_count'] or 0,
+        orders_data['total_revenue'] or 0,
+    )
+
     return {
         'date': str(target_date),
         'created': created,
@@ -126,6 +138,8 @@ def cleanup_old_events(self, days: int = 90) -> dict:
     deleted_count, _ = AnalyticsEvent.objects.filter(
         event_date__lt=cutoff_date
     ).delete()
+
+    logger.info("Analytics cleanup: deleted=%d cutoff=%s", deleted_count, cutoff_date)
 
     return {
         'deleted_count': deleted_count,

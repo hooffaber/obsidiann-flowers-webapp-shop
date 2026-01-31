@@ -6,6 +6,13 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
+# Install system dependencies (including Pillow requirements for image processing)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libjpeg62-turbo-dev \
+    zlib1g-dev \
+    libwebp-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
@@ -21,8 +28,8 @@ ENV PATH="/app/.venv/bin:$PATH"
 # Copy application code
 COPY src/ ./src/
 
-# Create logs directory
-RUN mkdir -p /app/src/logs
+# Create logs and media directories
+RUN mkdir -p /app/src/logs /app/src/media
 
 WORKDIR /app/src
 
