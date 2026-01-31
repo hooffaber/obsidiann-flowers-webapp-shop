@@ -43,12 +43,11 @@ class Migration(migrations.Migration):
         ),
         # Step 2: Fill existing orders with unique UIDs
         migrations.RunPython(fill_existing_uids, reverse_fill),
-        # Step 3: Make uid non-nullable, unique, and indexed
+        # Step 3: Make uid non-nullable and unique (unique=True creates index automatically)
         migrations.AlterField(
             model_name='order',
             name='uid',
             field=models.CharField(
-                db_index=True,
                 max_length=10,
                 unique=True,
                 verbose_name='Номер заказа',
