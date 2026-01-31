@@ -14,6 +14,7 @@ from typing import Optional, Tuple
 
 from django.contrib.auth import get_user_model
 from rest_framework import authentication, exceptions
+from rest_framework_simplejwt.authentication import JWTAuthentication as BaseJWTAuthentication
 
 from apps.users.services import (
     TelegramAuthError,
@@ -22,6 +23,32 @@ from apps.users.services import (
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
+
+
+class DebugJWTAuthentication(BaseJWTAuthentication):
+    """JWT Authentication with debug logging."""
+
+    def authenticate(self, request):
+        header = self.get_header(request)
+        if header is None:
+            logger.debug("[JWT] No Authorization header")
+            return None
+
+        raw_token = self.get_raw_token(header)
+        if raw_token is None:
+            logger.debug("[JWT] No token in header")
+            return None
+
+        logger.info(f"[JWT] Token received: {raw_token[:20].decode()}...")
+
+        try:
+            validated_token = self.get_validated_token(raw_token)
+            user = self.get_user(validated_token)
+            logger.info(f"[JWT] Auth success: user_id={user.id}")
+            return (user, validated_token)
+        except Exception as e:
+            logger.warning(f"[JWT] Auth failed: {e}")
+            raise
 
 
 class TelegramAuthentication(authentication.BaseAuthentication):
