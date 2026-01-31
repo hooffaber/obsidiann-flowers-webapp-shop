@@ -11,6 +11,7 @@ from apps.core.serializers import PageContentSerializer
 class PageContentView(APIView):
     """Получение контента страницы по slug."""
 
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def get(self, request, slug: str):

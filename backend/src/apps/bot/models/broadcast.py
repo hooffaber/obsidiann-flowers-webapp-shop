@@ -24,6 +24,16 @@ class BroadcastContentType(models.TextChoices):
     VOICE = 'voice', 'Голосовое сообщение'
 
 
+class BroadcastAudience(models.TextChoices):
+    """Audience type choices for broadcast targeting."""
+    ALL = 'all', 'Всем'
+    CUSTOMERS = 'customers', 'Покупателям'
+    VIP = 'vip', 'Постоянным клиентам'
+    NEW = 'new', 'Новым (7 дней)'
+    INACTIVE = 'inactive', 'Неактивным (30+ дней)'
+    CUSTOM = 'custom', 'По списку'
+
+
 class Broadcast(models.Model):
     """
     Broadcast message model.
@@ -31,12 +41,20 @@ class Broadcast(models.Model):
     Stores information about mass messages sent to users.
     """
 
-    # Audience - list of usernames (without @)
+    # Audience type
+    audience_type = models.CharField(
+        max_length=20,
+        choices=BroadcastAudience.choices,
+        default=BroadcastAudience.CUSTOM,
+        verbose_name='Тип аудитории',
+    )
+
+    # Audience - list of usernames (without @) for CUSTOM type
     recipients_usernames = models.JSONField(
         default=list,
         blank=True,
         verbose_name='Получатели (usernames)',
-        help_text='Список username получателей',
+        help_text='Список username получателей (для типа "По списку")',
     )
 
     # Content

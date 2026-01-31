@@ -4,13 +4,18 @@ Broadcast handler for admin mass messaging.
 Uses database for conversation state (webhook-compatible).
 """
 import re
+from datetime import timedelta
+
 from asgiref.sync import sync_to_async
+from django.db.models import Count, Q
+from django.utils import timezone
 
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import ContextTypes
 
 from apps.bot.models import (
     Broadcast,
+    BroadcastAudience,
     BroadcastContentType,
     BotAdmin,
     ConversationState,
@@ -19,10 +24,21 @@ from apps.users.models import User
 
 
 # Conversation states
+STATE_CHOOSE_AUDIENCE = 'broadcast_choose_audience'
 STATE_ENTER_USERNAMES = 'broadcast_enter_usernames'
 STATE_CHOOSE_TYPE = 'broadcast_choose_type'
 STATE_RECEIVE_CONTENT = 'broadcast_receive_content'
 STATE_CONFIRM = 'broadcast_confirm'
+
+# Audience type mapping from button text to enum value
+AUDIENCE_TYPE_MAP = {
+    'all': BroadcastAudience.ALL,
+    'customers': BroadcastAudience.CUSTOMERS,
+    'vip': BroadcastAudience.VIP,
+    'new': BroadcastAudience.NEW,
+    'inactive': BroadcastAudience.INACTIVE,
+    'custom': BroadcastAudience.CUSTOM,
+}
 
 # Content type mapping
 CONTENT_TYPE_MAP = {
@@ -73,6 +89,88 @@ def _parse_usernames(text: str) -> list[str]:
     return result
 
 
+def get_audience_queryset(audience_type: str):
+    """
+    Get queryset of users for a given audience type.
+
+    Returns QuerySet of User objects with telegram_id.
+    """
+    from apps.orders.models import OrderStatus
+
+    base = User.objects.filter(telegram_id__isnull=False)
+
+    if audience_type == BroadcastAudience.ALL:
+        return base
+
+    elif audience_type == BroadcastAudience.CUSTOMERS:
+        # Users with at least one confirmed or done order
+        return base.filter(
+            orders__status__in=[OrderStatus.CONFIRMED, OrderStatus.DONE]
+        ).distinct()
+
+    elif audience_type == BroadcastAudience.VIP:
+        # Users with 2+ done orders
+        return base.annotate(
+            done_orders=Count('orders', filter=Q(orders__status=OrderStatus.DONE))
+        ).filter(done_orders__gte=2)
+
+    elif audience_type == BroadcastAudience.NEW:
+        # Registered in last 7 days
+        week_ago = timezone.now() - timedelta(days=7)
+        return base.filter(date_joined__gte=week_ago)
+
+    elif audience_type == BroadcastAudience.INACTIVE:
+        # Last login more than 30 days ago
+        month_ago = timezone.now() - timedelta(days=30)
+        return base.filter(last_login__lt=month_ago)
+
+    return base.none()
+
+
+@sync_to_async
+def _get_audience_counts() -> dict[str, int]:
+    """Get counts for each audience type."""
+    return {
+        'all': get_audience_queryset(BroadcastAudience.ALL).count(),
+        'customers': get_audience_queryset(BroadcastAudience.CUSTOMERS).count(),
+        'vip': get_audience_queryset(BroadcastAudience.VIP).count(),
+        'new': get_audience_queryset(BroadcastAudience.NEW).count(),
+        'inactive': get_audience_queryset(BroadcastAudience.INACTIVE).count(),
+    }
+
+
+async def _get_audience_keyboard() -> ReplyKeyboardMarkup:
+    """Build audience selection keyboard with counts."""
+    counts = await _get_audience_counts()
+    keyboard = [
+        [f"👥 Всем ({counts['all']} чел.)"],
+        [f"🛒 Покупателям ({counts['customers']} чел.)"],
+        [f"⭐ Постоянным ({counts['vip']} чел.)"],
+        [f"🆕 Новым за 7 дней ({counts['new']} чел.)"],
+        [f"😴 Неактивным ({counts['inactive']} чел.)"],
+        ["📝 По списку @username"],
+        ["❌ Отмена"],
+    ]
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+
+
+def _parse_audience_choice(text: str) -> str | None:
+    """Parse audience type from button text."""
+    if text.startswith("👥 Всем"):
+        return BroadcastAudience.ALL
+    elif text.startswith("🛒 Покупателям"):
+        return BroadcastAudience.CUSTOMERS
+    elif text.startswith("⭐ Постоянным"):
+        return BroadcastAudience.VIP
+    elif text.startswith("🆕 Новым"):
+        return BroadcastAudience.NEW
+    elif text.startswith("😴 Неактивным"):
+        return BroadcastAudience.INACTIVE
+    elif text.startswith("📝 По списку"):
+        return BroadcastAudience.CUSTOM
+    return None
+
+
 @sync_to_async
 def _find_users_by_usernames(usernames: list[str]) -> tuple[list[dict], list[str]]:
     """
@@ -118,15 +216,16 @@ async def handle_broadcast_command(update: Update, context: ContextTypes.DEFAULT
         return
 
     # Set state
-    await ConversationState.aset_state(user.id, STATE_ENTER_USERNAMES, {})
+    await ConversationState.aset_state(user.id, STATE_CHOOSE_AUDIENCE, {})
+
+    # Build audience keyboard with counts
+    keyboard = await _get_audience_keyboard()
 
     await update.message.reply_text(
         "📢 *Создание рассылки*\n\n"
-        "*Шаг 1/3:* Введите @username получателей\n\n"
-        "Формат: `@user1 @user2 @user3`\n"
-        "или через запятую: `@user1, @user2, @user3`",
+        "*Шаг 1/4:* Выберите аудиторию:",
         parse_mode='Markdown',
-        reply_markup=CANCEL_KEYBOARD,
+        reply_markup=keyboard,
     )
 
 
@@ -140,7 +239,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if not state:
         return
 
-    if state == STATE_ENTER_USERNAMES:
+    if state == STATE_CHOOSE_AUDIENCE:
+        await _handle_choose_audience(update, user.id, data)
+
+    elif state == STATE_ENTER_USERNAMES:
         await _handle_enter_usernames(update, user.id, data)
 
     elif state == STATE_CHOOSE_TYPE:
@@ -151,6 +253,85 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     elif state == STATE_CONFIRM:
         await _handle_confirm(update, user.id, data)
+
+
+async def _handle_choose_audience(update: Update, user_id: int, data: dict) -> None:
+    """Handle audience selection."""
+    text = update.message.text
+
+    if text == '❌ Отмена':
+        await ConversationState.aclear(user_id)
+        await update.message.reply_text(
+            "Рассылка отменена.",
+            reply_markup=ReplyKeyboardRemove(),
+        )
+        return
+
+    # Parse audience type from button text
+    audience_type = _parse_audience_choice(text)
+
+    if not audience_type:
+        keyboard = await _get_audience_keyboard()
+        await update.message.reply_text(
+            "Пожалуйста, выберите аудиторию из предложенных вариантов.",
+            reply_markup=keyboard,
+        )
+        return
+
+    # Save audience type
+    data['audience_type'] = audience_type
+
+    # If custom list, ask for usernames
+    if audience_type == BroadcastAudience.CUSTOM:
+        await ConversationState.aset_state(user_id, STATE_ENTER_USERNAMES, data)
+        await update.message.reply_text(
+            "*Шаг 2/4:* Введите @username получателей\n\n"
+            "Формат: `@user1 @user2 @user3`\n"
+            "или через запятую: `@user1, @user2, @user3`",
+            parse_mode='Markdown',
+            reply_markup=CANCEL_KEYBOARD,
+        )
+        return
+
+    # For predefined audiences, get recipients and move to content type
+    recipients = await _get_recipients_for_audience(audience_type)
+
+    if not recipients:
+        keyboard = await _get_audience_keyboard()
+        await update.message.reply_text(
+            "❌ В выбранной аудитории нет пользователей.\n"
+            "Выберите другую аудиторию:",
+            reply_markup=keyboard,
+        )
+        return
+
+    # Save recipients info
+    data['recipients'] = recipients
+    data['recipients_usernames'] = [r['username'] for r in recipients if r.get('username')]
+    await ConversationState.aset_state(user_id, STATE_CHOOSE_TYPE, data)
+
+    await update.message.reply_text(
+        f"✅ Выбрано: *{len(recipients)} чел.*\n\n"
+        f"*Шаг 2/3:* Выберите тип контента:",
+        parse_mode='Markdown',
+        reply_markup=CONTENT_TYPE_KEYBOARD,
+    )
+
+
+@sync_to_async
+def _get_recipients_for_audience(audience_type: str) -> list[dict]:
+    """Get recipients list for a predefined audience type."""
+    queryset = get_audience_queryset(audience_type)
+    users = queryset.values('id', 'telegram_id', 'telegram_username', 'username')
+
+    return [
+        {
+            'id': u['id'],
+            'telegram_id': u['telegram_id'],
+            'username': u['telegram_username'] or u['username'] or '',
+        }
+        for u in users
+    ]
 
 
 async def _handle_enter_usernames(update: Update, user_id: int, data: dict) -> None:
@@ -208,7 +389,7 @@ async def _handle_enter_usernames(update: Update, user_id: int, data: dict) -> N
 
     await update.message.reply_text(
         f"{response}\n\n"
-        f"*Шаг 2/3:* Выберите тип контента:",
+        f"*Шаг 3/4:* Выберите тип контента:",
         parse_mode='Markdown',
         reply_markup=CONTENT_TYPE_KEYBOARD,
     )
@@ -239,12 +420,16 @@ async def _handle_choose_type(update: Update, user_id: int, data: dict) -> None:
     data['content_type'] = content_type
     await ConversationState.aset_state(user_id, STATE_RECEIVE_CONTENT, data)
 
+    # Dynamic step numbers: 3/3 for predefined audiences, 4/4 for custom
+    is_custom = data.get('audience_type') == BroadcastAudience.CUSTOM
+    step = "4/4" if is_custom else "3/3"
+
     prompts = {
-        BroadcastContentType.TEXT: "✏️ *Шаг 3/3:* Отправьте текст сообщения:",
-        BroadcastContentType.PHOTO: "🖼 *Шаг 3/3:* Отправьте фото (можно с подписью):",
-        BroadcastContentType.VIDEO: "🎬 *Шаг 3/3:* Отправьте видео (можно с подписью):",
-        BroadcastContentType.DOCUMENT: "📎 *Шаг 3/3:* Отправьте документ (можно с подписью):",
-        BroadcastContentType.VOICE: "🎤 *Шаг 3/3:* Отправьте голосовое сообщение:",
+        BroadcastContentType.TEXT: f"✏️ *Шаг {step}:* Отправьте текст сообщения:",
+        BroadcastContentType.PHOTO: f"🖼 *Шаг {step}:* Отправьте фото (можно с подписью):",
+        BroadcastContentType.VIDEO: f"🎬 *Шаг {step}:* Отправьте видео (можно с подписью):",
+        BroadcastContentType.DOCUMENT: f"📎 *Шаг {step}:* Отправьте документ (можно с подписью):",
+        BroadcastContentType.VOICE: f"🎤 *Шаг {step}:* Отправьте голосовое сообщение:",
     }
 
     await update.message.reply_text(
@@ -386,8 +571,10 @@ async def _handle_confirm(update: Update, user_id: int, data: dict) -> None:
 
     # Create broadcast record
     recipients_usernames = data.get('recipients_usernames', [])
+    audience_type = data.get('audience_type', BroadcastAudience.CUSTOM)
 
     broadcast = await sync_to_async(Broadcast.objects.create)(
+        audience_type=audience_type,
         recipients_usernames=recipients_usernames,
         content_type=data['content_type'],
         text=data.get('text') or '',

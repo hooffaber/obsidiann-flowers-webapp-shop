@@ -41,6 +41,7 @@ class TelegramOnlyMiddleware:
         '/api/schema/',
         '/api/docs/',
         '/api/redoc/',
+        '/api/v1/pages/',  # Публичные страницы (О нас, Доставка и т.д.)
         '/static/',
         '/media/',
         '/tinymce/',

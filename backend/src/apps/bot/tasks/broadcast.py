@@ -11,11 +11,13 @@ from django.utils import timezone
 
 from apps.bot.models import (
     Broadcast,
+    BroadcastAudience,
     BroadcastLog,
     BroadcastLogStatus,
     BroadcastStatus,
     BroadcastContentType,
 )
+from apps.bot.handlers.broadcast import get_audience_queryset
 from apps.users.models import User
 
 
@@ -49,21 +51,31 @@ def send_broadcast_task(self, broadcast_id: int) -> dict:
     broadcast.started_at = timezone.now()
     broadcast.save(update_fields=['status', 'started_at'])
 
-    # Get users by usernames (search in both telegram_username and username fields)
+    # Get users based on audience type
     from django.db.models import Q
 
-    usernames = broadcast.recipients_usernames or []
-    # Build OR query for each username
-    if usernames:
-        q = Q()
-        for uname in usernames:
-            q |= Q(telegram_username__iexact=uname) | Q(username__iexact=uname)
+    audience_type = broadcast.audience_type
+
+    if audience_type and audience_type != BroadcastAudience.CUSTOM:
+        # Use predefined audience queryset
         users = list(
-            User.objects.filter(q, telegram_id__isnull=False)
+            get_audience_queryset(audience_type)
             .values_list('id', 'telegram_id', 'username')
         )
     else:
-        users = []
+        # CUSTOM: Get users by usernames (search in both telegram_username and username fields)
+        usernames = broadcast.recipients_usernames or []
+        # Build OR query for each username
+        if usernames:
+            q = Q()
+            for uname in usernames:
+                q |= Q(telegram_username__iexact=uname) | Q(username__iexact=uname)
+            users = list(
+                User.objects.filter(q, telegram_id__isnull=False)
+                .values_list('id', 'telegram_id', 'username')
+            )
+        else:
+            users = []
 
     total_recipients = len(users)
     broadcast.total_recipients = total_recipients
