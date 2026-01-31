@@ -22,6 +22,43 @@ import { getTelegramInitData, isTelegramWebApp } from '@/lib/telegram';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api/v1';
 
+// ============ Token Refresh Lock ============
+
+let refreshPromise: Promise<boolean> | null = null;
+let initAuthPromise: Promise<void> | null = null;
+
+async function refreshTokenWithLock(): Promise<boolean> {
+  // If refresh is already in progress, wait for it
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  // Start new refresh
+  refreshPromise = useAuthStore.getState().refreshToken();
+
+  try {
+    return await refreshPromise;
+  } finally {
+    refreshPromise = null;
+  }
+}
+
+async function initAuthWithLock(): Promise<void> {
+  // If init is already in progress, wait for it
+  if (initAuthPromise) {
+    return initAuthPromise;
+  }
+
+  // Start new init
+  initAuthPromise = initAuth();
+
+  try {
+    await initAuthPromise;
+  } finally {
+    initAuthPromise = null;
+  }
+}
+
 // ============ Error Handling ============
 
 export class ApiError extends Error {
@@ -71,14 +108,14 @@ async function request<T>(
   // Handle 401 - try to refresh token or re-authenticate
   if (response.status === 401 && retry) {
     if (accessToken) {
-      // Has JWT - try to refresh it
-      const refreshed = await useAuthStore.getState().refreshToken();
+      // Has JWT - try to refresh it (with lock to prevent race conditions)
+      const refreshed = await refreshTokenWithLock();
       if (refreshed) {
         return request<T>(endpoint, options, false);
       }
     } else if (isTelegramWebApp()) {
-      // No JWT - try to re-init auth with fresh Telegram initData
-      await initAuth();
+      // No JWT - try to re-init auth with fresh Telegram initData (with lock)
+      await initAuthWithLock();
       if (useAuthStore.getState().getAccessToken()) {
         return request<T>(endpoint, options, false);
       }

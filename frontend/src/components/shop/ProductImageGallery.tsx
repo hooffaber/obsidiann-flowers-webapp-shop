@@ -11,7 +11,9 @@ export function ProductImageGallery({ images, title }: ProductImageGalleryProps)
   const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set([0]));
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
   const touchEndX = useRef(0);
+  const isHorizontalSwipe = useRef(false);
 
   // Preload next image
   useEffect(() => {
@@ -27,13 +29,33 @@ export function ProductImageGallery({ images, title }: ProductImageGalleryProps)
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    touchEndX.current = e.touches[0].clientX;
+    isHorizontalSwipe.current = false;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    touchEndX.current = e.touches[0].clientX;
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const diffX = Math.abs(currentX - touchStartX.current);
+    const diffY = Math.abs(currentY - touchStartY.current);
+
+    // Determine swipe direction on first significant movement
+    if (!isHorizontalSwipe.current && (diffX > 10 || diffY > 10)) {
+      isHorizontalSwipe.current = diffX > diffY;
+    }
+
+    // Block vertical scroll if horizontal swipe
+    if (isHorizontalSwipe.current) {
+      e.preventDefault();
+    }
+
+    touchEndX.current = currentX;
   };
 
   const handleTouchEnd = () => {
+    if (!isHorizontalSwipe.current) return;
+
     const diff = touchStartX.current - touchEndX.current;
     const threshold = 50;
 
@@ -65,7 +87,7 @@ export function ProductImageGallery({ images, title }: ProductImageGalleryProps)
       {/* Images Container */}
       <div
         ref={containerRef}
-        className="flex h-full transition-transform duration-300 ease-out touch-pan-x"
+        className="flex h-full transition-transform duration-300 ease-out"
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
