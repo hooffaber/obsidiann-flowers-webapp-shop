@@ -24,17 +24,27 @@ const API_BASE = import.meta.env.VITE_API_URL || '/api/v1';
 
 // ============ Token Refresh Lock ============
 
-let refreshPromise: Promise<boolean> | null = null;
+let refreshPromise: Promise<string | null> | null = null;
 let initAuthPromise: Promise<void> | null = null;
 
-async function refreshTokenWithLock(): Promise<boolean> {
+async function refreshTokenWithLock(): Promise<string | null> {
   // If refresh is already in progress, wait for it
   if (refreshPromise) {
+    console.log('[API] Waiting for existing refresh...');
     return refreshPromise;
   }
 
-  // Start new refresh
-  refreshPromise = useAuthStore.getState().refreshToken();
+  console.log('[API] Starting token refresh...');
+
+  // Start new refresh and return the NEW token directly
+  refreshPromise = (async () => {
+    const result = await useAuthStore.getState().refreshToken();
+    if (result) {
+      // Return the fresh token directly from store
+      return useAuthStore.getState().getAccessToken();
+    }
+    return null;
+  })();
 
   try {
     return await refreshPromise;
@@ -74,6 +84,40 @@ export class ApiError extends Error {
 
 // ============ Request Helper ============
 
+/**
+ * Make a request with a specific token (used for retries after refresh)
+ */
+async function requestWithToken<T>(
+  endpoint: string,
+  options: RequestInit = {},
+  token: string
+): Promise<T> {
+  const url = `${API_BASE}${endpoint}`;
+
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
+    ...options.headers,
+    'Authorization': `Bearer ${token}`,
+  };
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new ApiError(response.status, response.statusText, data);
+  }
+
+  if (response.status === 204) {
+    return null as T;
+  }
+
+  return response.json();
+}
+
 async function request<T>(
   endpoint: string,
   options: RequestInit = {},
@@ -107,17 +151,24 @@ async function request<T>(
 
   // Handle 401 - try to refresh token or re-authenticate
   if (response.status === 401 && retry) {
+    console.log('[API] Got 401, attempting refresh...');
+
     if (accessToken) {
       // Has JWT - try to refresh it (with lock to prevent race conditions)
-      const refreshed = await refreshTokenWithLock();
-      if (refreshed) {
-        return request<T>(endpoint, options, false);
+      const newToken = await refreshTokenWithLock();
+      if (newToken) {
+        console.log('[API] Refresh successful, retrying with new token');
+        // Retry with the new token passed explicitly
+        return requestWithToken<T>(endpoint, options, newToken);
       }
+      console.log('[API] Refresh failed');
     } else if (isTelegramWebApp()) {
       // No JWT - try to re-init auth with fresh Telegram initData (with lock)
+      console.log('[API] No token, trying Telegram re-auth...');
       await initAuthWithLock();
-      if (useAuthStore.getState().getAccessToken()) {
-        return request<T>(endpoint, options, false);
+      const newToken = useAuthStore.getState().getAccessToken();
+      if (newToken) {
+        return requestWithToken<T>(endpoint, options, newToken);
       }
     }
   }

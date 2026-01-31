@@ -83,7 +83,11 @@ export const useAuthStore = create<AuthState>()(
           }
           
           const data = await response.json();
-          set({ accessToken: data.access });
+          // Save both access and refresh tokens (refresh rotates on each use)
+          set({
+            accessToken: data.access,
+            ...(data.refresh && { refreshTokenValue: data.refresh }),
+          });
           return true;
         } catch {
           get().logout();
