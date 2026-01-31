@@ -237,6 +237,7 @@ class TestSendAdminOrderNotification:
         message = mock_post.call_args[1]['json']['text']
         assert '🚚' not in message
 
+    @pytest.mark.django_db
     @patch('apps.bot.services.notifications.requests.post')
     def test_returns_zero_when_no_admins(self, mock_post, order_items):
         """Should return 0 when no active admins with telegram_id."""

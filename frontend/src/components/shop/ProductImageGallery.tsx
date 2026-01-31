@@ -65,7 +65,7 @@ export function ProductImageGallery({ images, title }: ProductImageGalleryProps)
       {/* Images Container */}
       <div
         ref={containerRef}
-        className="flex h-full transition-transform duration-300 ease-out"
+        className="flex h-full transition-transform duration-300 ease-out touch-pan-x"
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
