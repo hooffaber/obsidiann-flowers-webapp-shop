@@ -153,6 +153,21 @@ async function request<T>(
   if (response.status === 401 && retry) {
     console.log('[API] Got 401, attempting refresh...');
 
+    // Check if error is "user not found" - need full re-auth
+    const errorData = await response.clone().json().catch(() => null);
+    if (errorData?.code === 'user_not_found') {
+      console.log('[API] User not found, forcing re-authentication...');
+      useAuthStore.getState().logout();
+      if (isTelegramWebApp()) {
+        await initAuthWithLock();
+        const newToken = useAuthStore.getState().getAccessToken();
+        if (newToken) {
+          return requestWithToken<T>(endpoint, options, newToken);
+        }
+      }
+      throw new ApiError(401, 'Re-authentication required', errorData);
+    }
+
     if (accessToken) {
       // Has JWT - try to refresh it (with lock to prevent race conditions)
       const newToken = await refreshTokenWithLock();
