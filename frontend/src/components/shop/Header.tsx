@@ -18,12 +18,12 @@ interface HeaderProps {
 
 export function Header({ onSearch, showSearch = true, title }: HeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [inputValue, setInputValue] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch?.(searchQuery);
+    onSearch?.(inputValue);
   };
 
   return (
@@ -76,8 +76,8 @@ export function Header({ onSearch, showSearch = true, title }: HeaderProps) {
           </span>
         </Link>
 
-        {/* Search button - right side */}
-        {showSearch && (
+        {/* Search button - right side (hide close button when search has text) */}
+        {showSearch && !(searchOpen && inputValue) && (
           <Button
             variant="ghost"
             size="icon"
@@ -100,11 +100,11 @@ export function Header({ onSearch, showSearch = true, title }: HeaderProps) {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                type="search"
+                type="text"
                 placeholder="Найти цветы..."
-                value={searchQuery}
+                value={inputValue}
                 onChange={(e) => {
-                  setSearchQuery(e.target.value);
+                  setInputValue(e.target.value);
                   onSearch?.(e.target.value);
                 }}
                 className="pl-10 bg-muted border-0"

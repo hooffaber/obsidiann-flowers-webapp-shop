@@ -8,12 +8,12 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.dev
     ports:
-      - "5173:5173"
+      - "0.0.0.0:5173:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      - VITE_API_URL=http://localhost:8000/api/v1
+      - VITE_API_URL=http://192.168.0.13:8000/api/v1
     depends_on:
       - api
     restart: unless-stopped
@@ -24,7 +24,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile.dev
     ports:
-      - "8000:8000"
+      - "0.0.0.0:8000:8000"
     env_file:
       - ./backend/.env
     environment:

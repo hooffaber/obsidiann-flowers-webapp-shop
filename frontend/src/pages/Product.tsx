@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Heart, Minus, Plus, ShoppingBag, Check } from 'lucide-react';
+import { Heart, Minus, Plus, ShoppingBag, Check, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -113,7 +113,14 @@ export default function ProductPage() {
     <div className="min-h-screen bg-background safe-area-bottom">
       {/* Header */}
       <header className="sticky top-0 z-50 safe-area-top bg-background/95 backdrop-blur-md border-b border-border">
-        <div className="container flex h-14 items-center justify-end">
+        <div className="container flex h-14 items-center justify-between">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
